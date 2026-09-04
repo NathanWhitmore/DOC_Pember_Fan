@@ -56,6 +56,17 @@ df <- rbind(df.2019, df.2020.1, df.2020.12, df.2021, df.2022, df.2023, df.2024, 
 # rename cover
 df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
 
+# ground cover@ strip out ground cover
+names(df)
+
+ground.cover <- df %>% 
+  filter(!(is.na(GroundCover)))
+
+df <- df %>% 
+  filter(is.na(GroundCover))
+
+
+
 
 # change cover values to perc
 # : 1 = <1% cover, 2= 1-5%, 3=6-25%, 4=26-50%, 5=51-75%, 6=76-100%).
@@ -83,6 +94,21 @@ df <-  df %>%
                             "5" = L5,
                             "6" = L6))
   )
+
+
+ground.cover <- ground.cover  %>% 
+  mutate(Perc = as.numeric(recode(Cover, 
+                                  "P" = P,
+                                  "1" = L1,
+                                  "2" = L2,
+                                  "3" = L3,
+                                  "4" = L4,
+                                  "5" = L5,
+                                  "6" = L6))
+  )
+
+  
+write.csv(ground.cover, "Ground cover.csv", row.names = FALSE)
 
 # make into dat.frame
 df <- as.data.frame(df)
@@ -132,12 +158,68 @@ ggplot()+
   theme(aspect.ratio = 0.5)+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
 
+## look for correlations
+
+test <- type
+names(test)
+test$EntryNo <- NULL
+test$TaxonBioStatus <- NULL
+test$TaxonGrowthForm <- NULL
+test$`Overhanging Ring` <- NULL
+test$Perc <- NULL
+test$Weight <- NULL
+test$GroundCover <- NULL
+
+test %>%
+  count(Year, Plot, Subplot, `Verbatim Species`) %>%
+  filter(n > 1)
+
+test.wide <- test %>%
+  pivot_wider(
+    id_cols = c(Year, Plot),
+    names_from = `Verbatim Species`,
+    values_from = Proportion,
+    values_fn = sum,
+    values_fill = 0
+  )
+
+test.wide <- as.data.frame(test.wide)
+str(test.wide)
+
+species.cor <- test.wide %>%
+  select(-Year, -Plot) %>%
+  select(where(~ sd(.x, na.rm = TRUE) > 0)) %>%
+  cor(use = "pairwise.complete.obs") %>% 
+  as.data.frame()
+
+species.cor <- species.cor %>% rownames_to_column()
+species.cor <- species.cor %>% rename(Species = rowname)
+
+head(species.cor)
+
+brapin <- species.cor[, c("Species", "BRAPIN")]
+
+brapin <- brapin %>% arrange(BRAPIN)
+brapin <- brapin[1:(nrow(brapin)-1), ]
+brapin$direction <- ifelse(brapin$BRAPIN <0, "Neg", "Pos")
+
+ggplot()+
+  theme_bw()+
+  geom_col(data = brapin, aes(x= reorder(Species, BRAPIN) , 
+                              y = BRAPIN, fill = direction))+
+  scale_fill_manual(values = c("purple", "red"))+
+  theme(axis.text = element_text(angle = 30, hjust =1))
+  
+names(test)
+
+sort(unique(test$NVSSpeciesName))
+
 
 ## overall
 set.seed(18)
 
-df.no.unknown <- df %>% filter(NVSSpeciesName != "(Unknown)"&
-                                 TaxonBioStatus != "Unknown")
+df.no.unknown <- df # %>% filter(NVSSpeciesName != "(Unknown)"&
+                    #             TaxonBioStatus != "Unknown")
 
 unique.color <- length(unique(df.no.unknown$NVSSpeciesName))
 my.colour <- distinctColorPalette(k = unique.color)
@@ -282,13 +364,15 @@ library(AICcmodavg)
 library(glmmTMB)
 library(DHARMa)
 
+no.species <- na.omit(no.species)
+
 Cand.models <- list()
 
-Cand.models[[1]] <- glmmTMB(Richness ~ 1 + (1|Plot/Subplot), family = compois(), data = no.species)
-Cand.models[[2]] <- glmmTMB(Richness ~ Year + (1|Plot/Subplot), family = compois(), data = no.species)
-Cand.models[[3]] <- glmmTMB(Richness ~ Bio.simple + (1|Plot/ Subplot), family = compois(), data = no.species)
-Cand.models[[4]] <- glmmTMB(Richness ~ Year + Bio.simple + (1|Plot/ Subplot), family = compois(), data = no.species)  
-Cand.models[[5]] <- glmmTMB(Richness ~ Year * Bio.simple + (1|Plot/Subplot), family = compois(), data = no.species)  
+Cand.models[[1]] <- glmmTMB(Richness ~ 1 + (1|Plot/Subplot), family = poisson(), data = no.species)
+Cand.models[[2]] <- glmmTMB(Richness ~ Year + (1|Plot/Subplot), family = poisson(), data = no.species)
+Cand.models[[3]] <- glmmTMB(Richness ~ Bio.simple + (1|Plot/ Subplot), family = poisson(), data = no.species)
+Cand.models[[4]] <- glmmTMB(Richness ~ Year + Bio.simple + (1|Plot/ Subplot), family = poisson(), data = no.species)  
+Cand.models[[5]] <- glmmTMB(Richness ~ Year * Bio.simple + (1|Plot/Subplot), family = poisson(), data = no.species)  
 
 # create a vector of names to trace back models in set
 Modnames <- paste("mod", 1:length(Cand.models), sep = " ")
@@ -305,7 +389,17 @@ testOverdispersion(res)
 
 testDispersion(res)
 
-overdispersion
+new.data <- no.species
+new.data$pred <- predict(Cand.models[[5]], newdata = new.data, type = "response")
+
+ggplot()+
+  geom_point(data = new.data, aes(x= Richness, y= pred), alpha = 0.2,
+             position = position_jitter(width =0.1, height = 0))+
+  scale_x_continuous(breaks = 0:10, labels = 0:10)+
+  scale_y_continuous(breaks = 0:10, labels = 0:10)+
+  geom_abline(slope = 1, intercept = 0, colour = "red", lwd =1)+
+  theme(aspect.ratio = 1)
+
 
 
 summary(Cand.models[[5]])

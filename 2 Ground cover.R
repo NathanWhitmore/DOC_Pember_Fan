@@ -7,7 +7,7 @@ library(glmmTMB)
 # read in data
 ground <- read.csv("Ground cover.csv")
 
-# make into dat.frame
+# make into data.frame
 ground <- as.data.frame(ground)
 
 # make subplot factor
@@ -26,6 +26,7 @@ one <- ground %>%
   filter(Plot == "RR2") %>%
   as.data.frame()
 
+# quick check
 ggplot()+
   geom_col(data = ground, aes(x = Subplot, y = Proportion,
                            fill = GroundCover))+
@@ -33,8 +34,9 @@ ggplot()+
 
 ground <- as.data.frame(ground)
 
-
+# renaming categories
 ground <- ground %>%
+  ungroup() %>%
   mutate(
     GroundCover = fct_recode(
       GroundCover,
@@ -52,6 +54,22 @@ ground <- ground %>% drop_na(Proportion)
 
 ground$Proportion <- ifelse(ground$Proportion == 1, 0.999, ground$Proportion)
 
+Cand.models.sub <- list()
+
+Cand.models.sub[[1]] <- glmmTMB(Proportion ~ 1 + GroundCover + (1|Plot/Subplot), family = beta_family(link = "logit"), data = ground)
+Cand.models.sub[[2]] <- glmmTMB(Proportion ~ Year * GroundCover + (1|Plot/Subplot), family = beta_family(link = "logit"), data = ground)
+
+# create a vector of names to trace back models in set
+Modnames <- paste("mod", 1:length(Cand.models.sub), sep = " ")
+Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
+                      unlist(lapply(Cand.models.sub, formula))))
+
+# AIC table to 4 digits
+w.subplot <- aictab(cand.set = Cand.models.sub, modnames = Modnames, sort = TRUE)
+w.subplot
+
+
+# without subplot
 Cand.models <- list()
 
 Cand.models[[1]] <- glmmTMB(Proportion ~ 1 + GroundCover + (1|Plot), family = beta_family(link = "logit"), data = ground)
@@ -63,7 +81,27 @@ Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1",
                       unlist(lapply(Cand.models, formula))))
 
 # AIC table to 4 digits
-aictab(cand.set = Cand.models, modnames = Modnames, sort = TRUE)
+w.plot <- aictab(cand.set = Cand.models, modnames = Modnames, sort = TRUE)
+w.plot 
 
-
+# check models
+summary(Cand.models.sub[[2]])  
 summary(Cand.models[[2]])  
+
+
+# do we need subplot as a random effects
+test <- list()
+
+test[[1]] <- glmmTMB(Proportion ~ Year * GroundCover + (1|Plot/Subplot), family = beta_family(link = "logit"), data = ground, REML = TRUE)
+test[[2]] <- glmmTMB(Proportion ~ Year * GroundCover + (1|Plot), family = beta_family(link = "logit"), data = ground, REML = TRUE)
+
+Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
+                      unlist(lapply(test, formula))))
+
+aictab(cand.set = test, modnames = Modnames, sort = TRUE)
+
+# THere is no practical need to treat subplot as a random effect
+ranef(test[[1]])
+ranef(test[[2]])
+
+summary(test[[1]])

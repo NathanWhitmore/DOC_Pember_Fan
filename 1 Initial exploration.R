@@ -57,8 +57,6 @@ df <- rbind(df.2019, df.2020.1, df.2020.12, df.2021, df.2022, df.2023, df.2024, 
 df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
 
 # ground cover@ strip out ground cover
-names(df)
-
 ground.cover <- df %>% 
   filter(!(is.na(GroundCover)))
 
@@ -66,12 +64,9 @@ df <- df %>%
   filter(is.na(GroundCover))
 
 
-
-
 # change cover values to perc
 # : 1 = <1% cover, 2= 1-5%, 3=6-25%, 4=26-50%, 5=51-75%, 6=76-100%).
 
-# 
 P <- 0.05 / 100
 L1 <- mean(0:1)  / 100 #p
 L2 <- mean(1:5) / 100 # 1
@@ -121,8 +116,19 @@ df <- df %>%
   group_by(Year, Plot, Subplot) %>%
   mutate(Weight = sum(Perc, na.rm = TRUE))
 
+df <- as.data.frame(df)
+df$GroundCover <- NULL
+df$`Overhanging Ring` <- NULL
+
 # corrected perc
 df$Proportion <- df$Perc/ df$Weight
+df$Proportion  <- ifelse(is.na(df$Proportion), 0, df$Proportion)
+df$Perc <- NULL
+df$Weight <- NULL
+df$Cover <- NULL
+
+# Indigenous comparison
+df$Indigenous <- ifelse(df$TaxonBioStatus == "Exotic", "Exotic", "Indigenous")
 
 # filter for types
 # Just forbs (as an example)
@@ -139,7 +145,7 @@ ggplot()+
   theme_bw()+
   geom_col(data = type, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
            position = "fill")+
-  facet_grid(TaxonBioStatus~TaxonGrowthForm)+
+  facet_grid(Indigenous~TaxonGrowthForm)+
   scale_fill_manual(values = my.colour)+
  # scale_x_continuous(breaks = 2020:2025, labels =  2020:2025) +
   theme(axis.title = element_text(
@@ -158,65 +164,14 @@ ggplot()+
   theme(aspect.ratio = 0.5)+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
 
-## look for correlations
 
-test <- type
-names(test)
-test$EntryNo <- NULL
-test$TaxonBioStatus <- NULL
-test$TaxonGrowthForm <- NULL
-test$`Overhanging Ring` <- NULL
-test$Perc <- NULL
-test$Weight <- NULL
-test$GroundCover <- NULL
-
-test %>%
-  count(Year, Plot, Subplot, `Verbatim Species`) %>%
-  filter(n > 1)
-
-test.wide <- test %>%
-  pivot_wider(
-    id_cols = c(Year, Plot),
-    names_from = `Verbatim Species`,
-    values_from = Proportion,
-    values_fn = sum,
-    values_fill = 0
-  )
-
-test.wide <- as.data.frame(test.wide)
-str(test.wide)
-
-species.cor <- test.wide %>%
-  select(-Year, -Plot) %>%
-  select(where(~ sd(.x, na.rm = TRUE) > 0)) %>%
-  cor(use = "pairwise.complete.obs") %>% 
-  as.data.frame()
-
-species.cor <- species.cor %>% rownames_to_column()
-species.cor <- species.cor %>% rename(Species = rowname)
-
-head(species.cor)
-
-brapin <- species.cor[, c("Species", "BRAPIN")]
-
-brapin <- brapin %>% arrange(BRAPIN)
-brapin <- brapin[1:(nrow(brapin)-1), ]
-brapin$direction <- ifelse(brapin$BRAPIN <0, "Neg", "Pos")
-
-ggplot()+
-  theme_bw()+
-  geom_col(data = brapin, aes(x= reorder(Species, BRAPIN) , 
-                              y = BRAPIN, fill = direction))+
-  scale_fill_manual(values = c("purple", "red"))+
-  theme(axis.text = element_text(angle = 30, hjust =1))
-  
-names(test)
-
-sort(unique(test$NVSSpeciesName))
+ggsave("Pember Fan Forbs.png", scale = 1.2, height = 8, width = 10)
 
 
 ## overall
 set.seed(18)
+
+sort(unique(df$TaxonBioStatus))
 
 df.no.unknown <- df # %>% filter(NVSSpeciesName != "(Unknown)"&
                     #             TaxonBioStatus != "Unknown")

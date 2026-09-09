@@ -7,12 +7,12 @@ df.2019 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
                       sheet = "2019 data")
 
 df.2020.1 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "JAN 2020")
+                        sheet = "JAN 2020")
 
 # use these
 
 df.2020.12 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2020")
+                         sheet = "Dec2020")
 df.2021 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
                       sheet = "Dec2021")
 df.2022 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
@@ -24,7 +24,7 @@ df.2024 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
 df.2025 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
                       sheet = "Dec2025")
 df.2025 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                 sheet = "Dec2025")
+                      sheet = "Dec2025")
 
 # keep only standardised columns
 # had to add in ""conv ground cover" column to df.2019 and df.2020jan tabs
@@ -56,17 +56,11 @@ df <- rbind(df.2019, df.2020.1, df.2020.12, df.2021, df.2022, df.2023, df.2024, 
 # rename cover
 df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
 
-# ground cover@ strip out ground cover
-ground.cover <- df %>% 
-  filter(!(is.na(GroundCover)))
-
-df <- df %>% 
-  filter(is.na(GroundCover))
-
 
 # change cover values to perc
 # : 1 = <1% cover, 2= 1-5%, 3=6-25%, 4=26-50%, 5=51-75%, 6=76-100%).
 
+# 
 P <- 0.05 / 100
 L1 <- mean(0:1)  / 100 #p
 L2 <- mean(1:5) / 100 # 1
@@ -82,18 +76,6 @@ df <- df %>% filter(!(Cover %in% c("??", "4?")))
 df <-  df %>%
   mutate(Perc = as.numeric(recode(Cover, 
                                   "P" = P,
-                            "1" = L1,
-                            "2" = L2,
-                            "3" = L3,
-                            "4" = L4,
-                            "5" = L5,
-                            "6" = L6))
-  )
-
-
-ground.cover <- ground.cover  %>% 
-  mutate(Perc = as.numeric(recode(Cover, 
-                                  "P" = P,
                                   "1" = L1,
                                   "2" = L2,
                                   "3" = L3,
@@ -101,9 +83,6 @@ ground.cover <- ground.cover  %>%
                                   "5" = L5,
                                   "6" = L6))
   )
-
-  
-write.csv(ground.cover, "Ground cover.csv", row.names = FALSE)
 
 # make into dat.frame
 df <- as.data.frame(df)
@@ -116,19 +95,8 @@ df <- df %>%
   group_by(Year, Plot, Subplot) %>%
   mutate(Weight = sum(Perc, na.rm = TRUE))
 
-df <- as.data.frame(df)
-df$GroundCover <- NULL
-df$`Overhanging Ring` <- NULL
-
 # corrected perc
 df$Proportion <- df$Perc/ df$Weight
-df$Proportion  <- ifelse(is.na(df$Proportion), 0, df$Proportion)
-df$Perc <- NULL
-df$Weight <- NULL
-df$Cover <- NULL
-
-# Indigenous comparison
-df$Indigenous <- ifelse(df$TaxonBioStatus == "Exotic", "Exotic", "Indigenous")
 
 # filter for types
 # Just forbs (as an example)
@@ -145,9 +113,9 @@ ggplot()+
   theme_bw()+
   geom_col(data = type, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
            position = "fill")+
-  facet_grid(Indigenous~TaxonGrowthForm)+
+  facet_grid(TaxonBioStatus~TaxonGrowthForm)+
   scale_fill_manual(values = my.colour)+
- # scale_x_continuous(breaks = 2020:2025, labels =  2020:2025) +
+  # scale_x_continuous(breaks = 2020:2025, labels =  2020:2025) +
   theme(axis.title = element_text(
     face = 2,
     size = 14,
@@ -165,16 +133,11 @@ ggplot()+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
 
 
-ggsave("Pember Fan Forbs.png", scale = 1.2, height = 8, width = 10)
-
-
 ## overall
 set.seed(18)
 
-sort(unique(df$TaxonBioStatus))
-
-df.no.unknown <- df # %>% filter(NVSSpeciesName != "(Unknown)"&
-                    #             TaxonBioStatus != "Unknown")
+df.no.unknown <- df %>% filter(NVSSpeciesName != "(Unknown)"&
+                                 TaxonBioStatus != "Unknown")
 
 unique.color <- length(unique(df.no.unknown$NVSSpeciesName))
 my.colour <- distinctColorPalette(k = unique.color)
@@ -182,8 +145,8 @@ my.colour <- distinctColorPalette(k = unique.color)
 ggplot()+
   theme_bw()+
   geom_col(data = df.no.unknown, aes(x = Year, y = Proportion, fill = NVSSpeciesName)
-          # , position = "fill"
-           )+
+           # , position = "fill"
+  )+
   scale_fill_manual(values = my.colour)+
   theme(axis.title = element_text(
     face = 2,
@@ -210,7 +173,7 @@ names(df.no.unknown)
 ggplot()+
   theme_bw()+
   geom_col(data = df.no.unknown, aes(x = Year, y = Proportion, fill = TaxonBioStatus)
-          #, position = "fill"
+           #, position = "fill"
   )+
   scale_fill_manual(values = my.colour)+
   theme(axis.title = element_text(
@@ -243,7 +206,7 @@ top20 <- df.no.unknown  %>%
 major.species <- unique(top20$NVSSpeciesName)
 
 major <- df.no.unknown %>% 
-   filter(NVSSpeciesName %in% major.species)
+  filter(NVSSpeciesName %in% major.species)
 
 unique.color <- length(unique(major$NVSSpeciesName))
 my.colour <- distinctColorPalette(k = unique.color)
@@ -319,15 +282,13 @@ library(AICcmodavg)
 library(glmmTMB)
 library(DHARMa)
 
-no.species <- na.omit(no.species)
-
 Cand.models <- list()
 
-Cand.models[[1]] <- glmmTMB(Richness ~ 1 + (1|Plot/Subplot), family = poisson(), data = no.species)
-Cand.models[[2]] <- glmmTMB(Richness ~ Year + (1|Plot/Subplot), family = poisson(), data = no.species)
-Cand.models[[3]] <- glmmTMB(Richness ~ Bio.simple + (1|Plot/ Subplot), family = poisson(), data = no.species)
-Cand.models[[4]] <- glmmTMB(Richness ~ Year + Bio.simple + (1|Plot/ Subplot), family = poisson(), data = no.species)  
-Cand.models[[5]] <- glmmTMB(Richness ~ Year * Bio.simple + (1|Plot/Subplot), family = poisson(), data = no.species)  
+Cand.models[[1]] <- glmmTMB(Richness ~ 1 + (1|Plot/Subplot), family = compois(), data = no.species)
+Cand.models[[2]] <- glmmTMB(Richness ~ Year + (1|Plot/Subplot), family = compois(), data = no.species)
+Cand.models[[3]] <- glmmTMB(Richness ~ Bio.simple + (1|Plot/ Subplot), family = compois(), data = no.species)
+Cand.models[[4]] <- glmmTMB(Richness ~ Year + Bio.simple + (1|Plot/ Subplot), family = compois(), data = no.species)  
+Cand.models[[5]] <- glmmTMB(Richness ~ Year * Bio.simple + (1|Plot/Subplot), family = compois(), data = no.species)  
 
 # create a vector of names to trace back models in set
 Modnames <- paste("mod", 1:length(Cand.models), sep = " ")
@@ -336,25 +297,24 @@ Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1",
 
 # AIC table to 4 digits
 aictab(cand.set = Cand.models, modnames = Modnames, sort = TRUE)
-  
-# check residuals
-res <- simulateResiduals(Cand.models[[1]])
-plot(res)
-testOverdispersion(res)
 
+# check residuals
+res <- simulateResiduals(Cand.models[[5]])
+plot(res)
+
+
+testOverdispersion(res)
 testDispersion(res)
 
-new.data <- no.species
+# predictions
+
+new.data <- na.omit(no.species)
 new.data$pred <- predict(Cand.models[[5]], newdata = new.data, type = "response")
 
 ggplot()+
-  geom_point(data = new.data, aes(x= Richness, y= pred), alpha = 0.2,
-             position = position_jitter(width =0.1, height = 0))+
-  scale_x_continuous(breaks = 0:10, labels = 0:10)+
-  scale_y_continuous(breaks = 0:10, labels = 0:10)+
+  geom_point(data = new.data, aes(x= Richness, y= pred))+
   geom_abline(slope = 1, intercept = 0, colour = "red", lwd =1)+
   theme(aspect.ratio = 1)
-
 
 
 summary(Cand.models[[5]])

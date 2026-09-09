@@ -211,10 +211,15 @@ river.polygons.cropped <- st_crop(river.polygons, st_bbox(adj.viz))
 ggplot()+
   geom_sf(data = river)
 
+# read kml
+
+ashley <- st_read("Ashley river boundary.kml")
+
 ggplot()+
   theme_void()+
   geom_sf(data = river.lines.cropped)+
   geom_sf(data = river.polygons.cropped)+
+  geom_sf(data = ashley, colour = "blue", lwd =2)+
   geom_sf(data = viz, aes(colour =effect, fill = effect, shape = Group), colour = "grey", size =5)+
   scale_fill_gradient(low = "yellow", high = "purple")+
   scale_shape_manual(values = c(21, 23))+
@@ -232,3 +237,46 @@ ggsave("Pember fan random effect spatial signal.png",
        scale = 1.2, width =9, height = 6,
        bg = "white")
 
+
+my.data.sf <- st_as_sf(my.data, coords =c("X", "Y"), crs = 2193)
+ashley <- st_union(ashley) %>% st_transform(crs = 2193)
+
+my.data$river_dist <- as.numeric(
+  st_distance(my.data.sf, ashley )
+)
+
+
+m1 <- glmmTMB(
+  Indigenous ~ Year + (1 | Plot),
+  family = genpois(),
+  data = my.data
+)
+
+m2 <- glmmTMB(
+  Indigenous ~ Year + river_dist+ (1 | Plot) +
+    (1 | Plot:Subplot),
+  family = genpois(),
+  data = my.data
+)
+
+summary(m2)
+ranef(m3)
+
+m3 <- glmmTMB(
+  Indigenous ~ Year + river_dist,
+  family = genpois(),
+  data = my.data
+)
+summary(m3)
+
+glmmTMB::diagnose(m3)
+
+AIC(m1,m2,m3)
+summary(m2)
+
+
+my.data <- my.data |>
+  mutate(
+    river_dist_z = as.numeric(scale(river_dist)),
+    Year_z = as.numeric(scale(Year))
+  )

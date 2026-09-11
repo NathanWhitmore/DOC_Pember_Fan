@@ -75,7 +75,7 @@ nrow(coords)
 # rejoin
 plot.re <- left_join(plot.re, coords, by = "Plot")
 
-# make distnace matrix
+# make distance matrix
 xy <- cbind(plot.re$X, plot.re$Y)
 d <- as.matrix(dist(xy))
 
@@ -154,8 +154,8 @@ ggplot()+
   theme_void()+
   geom_sf(data = river.lines.cropped)+
   geom_sf(data = river.polygons.cropped)+
-  geom_sf(data = ashley, colour = "blue", lwd =2)+
-  geom_sf(data = fence, colour = "red")+
+ # geom_sf(data = ashley, colour = "blue", lwd =2)+
+ # geom_sf(data = fence, colour = "red")+
   geom_sf(data = viz, aes(colour =effect, fill = effect, shape = Group), colour = "grey", size =5)+
   scale_fill_gradient(low = "yellow", high = "purple")+
   scale_shape_manual(values = c(21, 23))+
@@ -202,6 +202,7 @@ Models[[6]] <- glmmTMB(Indigenous ~ Year + scale(river.dist) + (1|Plot/Subplot),
 Models[[7]] <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 Models[[8]] <- glmmTMB(Indigenous ~ scale(river.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 Models[[9]] <- glmmTMB(Indigenous ~ scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[10]] <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 # Models[[7]] <- glmmTMB(Indigenous ~ Year + Exotic + scale(river_dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 #Models[[8]] <- glmmTMB(Indigenous ~ Year * scale(river_dist) + (1|Plot/Subplot), family = genpois(), data = my.data) 
 
@@ -214,7 +215,14 @@ Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1",
 aictab(cand.set = Models, modnames = Modnames, sort = TRUE)
 
 # summary
-summary(Models[[7]])
+summary(Models[[10]])
+
+# fitted
+my.data$fitted <- fitted(Models[[10]])
+
+ggplot()+ 
+  geom_violin(data = my.data, aes(y = Indigenous, x = as.factor(round(fitted ))))+
+  geom_abline(intercept = 0, slope = 1, colour = "red", lwd = 2)
 
 
 # simplified gen vs com
@@ -222,7 +230,8 @@ gen <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = genpoi
 com <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = compois(), data = my.data)
 
 # diagnostics
-res <- simulateResiduals(Models[[7]])
+res <- simulateResiduals(Models[[10]])
+plot(res)
 res.gen <- simulateResiduals(gen)
 res.com <- simulateResiduals(com)
 
@@ -237,8 +246,8 @@ testUniformity(res.gen)
 testUniformity(res.com)
 
 # are subplot random effects warranted
-rand.without <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = genpois(), data = my.data, REML = TRUE)
-rand.with <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data, REML = TRUE)
+rand.without <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot), family = genpois(), data = my.data, REML = TRUE)
+rand.with <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data, REML = TRUE)
 
 # subplots are totally justified
 AIC(rand.without, rand.with)
@@ -246,7 +255,7 @@ AIC(rand.without, rand.with)
 
 # new random effects
 m <- glmmTMB(
-  Indigenous ~ Year + scale(fence.dist) + (1 | Plot/Subplot),
+  Indigenous ~ Year * scale(fence.dist) + (1 | Plot/Subplot),
   family = genpois(),
   data = my.data
 )
@@ -300,4 +309,46 @@ ggsave("Pember fan random effect fence spatial.png",
        scale = 1.2, width =9, height = 6,
        bg = "white")
 
+
+# trajectory of 
+
+summary(Models[[10]])
+ranef(Models[[10]])
+
+model_performance(Models[[10]])
+
+# fence distances 
+range(my.data$fence.dist)
+fence.mean <- mean(my.data$fence.dist)
+fence.sd <- sd(my.data$fence.dist)
+fence.dist <- seq(from = 100, to= 1000, by =100)
+
+
+newdata <- expand_grid(Year = 0:8,
+                      fence.dist  = fence.dist)
+newdata$fence.scale <-(newdata$fence.dist-fence.mean)/fence.sd 
+
+newdata$fitted <-   exp(0.483491 + (-0.016209 * newdata$Year) +  
+  (-0.114952 * newdata$fence.scale) +
+  (0.005134 * newdata$fence.scale * newdata$Year))
+
+newdata$fence.dist  <- as.factor(newdata$fence.dist )
+
+str(newdata)
+
+ggplot()+
+  theme_bw() +
+  geom_line(data = newdata, aes(x = Year, y= fitted, colour = fence.dist), lwd =1)+
+  theme(panel.grid = element_blank())+
+  labs(colour = "Distance from fence line (m)",
+       x = "\nYear",
+       y= "Expected indigenous biodiversity \n(per subplot)\n")+
+  theme(axis.title = element_text(size = 16)) +
+  theme(axis.text = element_text(size = 14))
+  
+       
+ggsave("Pember fan distance from fence.png",  
+       scale = 1.2, width =9, height = 6,
+       bg = "white")
+                       
 

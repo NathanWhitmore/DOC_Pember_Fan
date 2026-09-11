@@ -1,0 +1,217 @@
+\documentclass{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{makeidx}
+\usepackage{multicol}
+\usepackage{sectsty}
+\usepackage[colorlinks = true,
+            linkcolor = blue,
+            urlcolor  = blue,
+            citecolor = blue,
+            anchorcolor = green]{hyperref}
+
+\usepackage{rotating}            
+\usepackage{pdflscape}     
+            
+\usepackage{natbib}
+\setcitestyle{aysep={}} 
+\bibliographystyle{apalike}
+
+
+% my ammendments
+\usepackage{xcolor}
+\usepackage[noae]{Sweave}
+\usepackage{bookman}
+\usepackage{titlesec}
+\usepackage{pdflscape}
+\usepackage[font=small,labelfont=bf]{caption}
+
+\usepackage{sectsty} % sets colour of chapters
+\allsectionsfont{\sffamily \mdseries\color{blue!20!black!30!green}} 
+%\sectionfont{\color{purple}}
+
+\setkeys{Gin}{width=0.9\textwidth}
+
+
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{shaded}}{\end{shaded}}
+
+\newcommand{\mytilde}{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}
+
+
+
+
+\begin{document}
+
+
+
+% title page
+\begin{titlepage}
+\vspace*{\stretch{1.0}}
+
+
+
+\noindent\normalsize\textsf{A report prepared for:} 
+
+\vspace{3mm}
+
+\noindent\normalsize\textsf{\textbf{Department of Conservation}}
+
+\begin{center}
+\vspace{20mm}
+
+{\fontfamily{ppl}\selectfont
+    \textcolor{blue!20!black!30!green}{\Large\Huge{\textsf{\textbf{Awak\=opaka skink monitoring analysis}
+}}}}
+
+\vspace{3mm}
+
+
+
+\end{center}
+
+\vspace{80mm}
+
+\begin{flushright}
+\noindent\textbf{\textsf{Nathan Whitmore}}\\
+
+
+
+\noindent \textsf{nathan@reproducible.co.nz}\\
+\noindent \textsf{31 July 2026}
+
+\end{flushright}
+
+\vspace{5mm}
+
+
+\vspace*{\stretch{2.0}}
+
+\end{titlepage}
+
+
+
+
+
+
+\section*{Summary}
+
+\begin{shaded}
+
+\noindent Intensive monitoring in 2025 of the only known Awak\=opaka skink population has generated sufficient information for decision making. Monitoring sessions during February and December captured a total of nine skinks including three females. The females were subsequently removed to be part of a captive breeding programme. The removal of the females violated the assumption population closure required by variable detection mark-recapture, occupancy, and N-mixture modelling techniques. However, as no males were removed, estimates could be made for the male component of the population. The chance repeated recapture of a single male skink across monitoring periods has enabled mark-recapture estimates to be produced (a situation previously thought unlikely). Based on our analysis it appears the monitored population possibly contains fewer than 20 males (with mean estimates of 10 and 14 males from the February and December monitoring). While there is relatively high uncertainty, Monte Carlo estimation suggests that, on average, 90\% of the population estimates would fall below 34 males, and 95\% would fall below 53. Given no other populations are known and the study site constitutes the majority of the only known population, the Awak\=opaka skink appear to sit on the very edge of extinction. The removal of the few available females for captive breeding purposes undoubtedly increases that risk. Furthermore, the population's low detection probability (\mytilde 0.05) when combined with its low population suggests that even if an effective \emph{in situ} intervention could be deployed the ability to detect a population response will be severely hampered. Under such circumstances the viability of future \emph{in situ} conservation for this species should be reviewed.
+
+
+
+\end{shaded}
+
+
+\section*{Background}
+
+Awak\=opaka skinks were discovered in 2014 from a small area of rugged boulder habitat near the Homer Saddle. Fewer than than 20 individuals were located prior to 2025. Surveying in 2024 using Gee's minnow traps only detected four individuals from 208 trap nights (over 5 days of surveying). 
+
+A comprehensive analysis of options for the monitoring designs (Whitmore 2024) determined that a nested spatial approach be employed in order to allow for the possible use of a large suite of statistical methods (including occupancy methods, N-mixture models, variable detection mark-recapture, and count based indices). Mark-recapture methods were considered to be at a high risk of failure given a low detection rate. As a result, a target of 10 monitoring sessions per monitoring period was recommended. 
+
+
+\section*{Methods}
+
+Mark recapture data was analysed in program MARK via the Robust Design under the assumption of no migration using a Huggins variant. As the data only contained data from six male individuals, with only one of those individuals being recaptured (twice), only a single, simple, model \emph{S(.)p(.)=c(.)} was considered. As under the Huggins method abundance is treated as a derived variable two estimates are produced (one for each monitoring period). As the resultant estimates were somewhat dissimilar a Monte Carlo approach was utilised to produce a distribution of the average abundance estimate using 100,000 draws based on the model's beta coefficients.
+
+\section*{Results}
+
+\subsection*{Mark-recapture}
+
+The singular model \emph{S(.)p(.)=c(.)} returned an abundance estimate for males of 10 (95\% CI: 4--40) for the February sampling and 14 (95\% CI: 6--55) for the December sampling. Male survival was uninformative with insufficient encounter histories to generate a meaningful estimate. The detection probability was very low (mean = 0.04, 95\% CI: 0.01--0.13). Abundance averaging led to a median estimate of 12 males, a 90th percentile of 33 males, and a 95th percentile of 53 males (Figure \ref{fig:percentile}). 
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Average pop est 2026.png"}
+     \caption{Histogram of the estimated no. of males including median, 90th percentile and 95th percentile.}
+     \label{fig:percentile}
+     
+\end{figure}
+\end{landscape}
+
+Over the course of 
+The single recaptured male (Ind 2) was found repeatedly on the northern perimeter of the site (Figure \ref{fig:tracks}). The length between the three recorded capture events was 38.4m. 
+
+\begin{figure}[h]
+\centering
+     \includegraphics[width=12cm,keepaspectratio]{"Tagged skinks.png"}
+     \caption{Recapture locations of Awakopaka skink.}
+     \label{fig:tagged}
+     
+\end{figure}
+
+
+\begin{figure}[h]
+\centering
+     \includegraphics[width=12cm,keepaspectratio]{"Recaptured animal.png"}
+     \caption{Recapture locations of Awakopaka skink.}
+     \label{fig:tracks}
+     
+\end{figure}
+
+
+\section*{Discussion}
+
+It appears that the current monitoring intensity is minimally sufficient to generate an abundance estimate due to multiple recaptures of a single animal. This has allowed population estimates for to be generated for males at the study site. The two monitoring sessions conducted thus far have produced similar estimates of 10 and 14 males, indicating that population is likely small albeit with a high degree of uncertainty demonstrated by large confidence intervals. The estimated capture/recapture probably at 0.04 (95\% CI: 0.01 -- 0.13) is likely the lowest recorded among New Zealand lizards. Such a low detection probability can be expected hamper efforts to track the population trajectory over time. Efforts to improve detection probability through the used of baited Gee's Minnow traps are likely to be trialed in the forthcoming monitoring period (Megan Willans pers. comms.). If we assume the estimates are accurate, and there is sex parity then a simple doubling of the estimates might suggest that around 24 animals might be within the study site boundary. As the study site is the only known stronghold of the species the low population estimate suggests they are in immediate danger of extinction.
+
+While home range information is limited to a single recaptured male, this individual appeared to show site fidelity, occupying a small area of the study site on its northern boundary. Its recorded path length of 38.4m over three recaptures suggests this individual likely had a comparatively small and stable home range. 
+
+\appendix
+\newpage
+
+\begin{landscape}
+
+\section*{Appendix 1}
+
+\footnotesize
+
+\begin{verbatim}
+
+
+
+
+
+                  SIN Link Function Parameters of {S(.)g(0)p(.)=c(.)}
+                                                              95% Confidence Interval
+    Parameter                  Beta         Standard Error     Lower           Upper
+ -------------------------  --------------  --------------  --------------  --------------
+    1:S                     -4.7123887       4.0158636      -12.583482       3.1587041    
+    2:Gamma''                0.0000000       0.0000000       0.0000000       0.0000000    
+    3:p Session 1           -1.1841301       0.1337697      -1.4463188      -0.9219414    
+
+
+                     Real Function Parameters of {S(.)g(0)p(.)=c(.)}
+                                                               95% Confidence Interval
+     Parameter                Estimate       Standard Error     Lower           Upper
+ --------------------------  --------------  --------------  --------------  --------------
+     1:S                      1.0000000       0.5484521E-06   0.9999989       1.0000011       
+     2:Gamma''                0.0000000       0.0000000       0.0000000       0.0000000      Fixed
+     3:p Session 1            0.0369143       0.0252225       0.0094515       0.1334259       
+
+
+                     Estimates of Derived Parameters
+
+               Population Estimates of {S(.)g(0)p(.)=c(.)}
+                                                95% Confidence Interval
+ Grp. Sess.     N-hat        Standard Error      Lower           Upper
+ ---- -----  --------------  --------------  --------------  --------------
+   1     1    9.5697993       7.1470935       4.1623528       40.133531    
+   1     2    13.928902       10.049185       5.9144781       55.493458    
+
+
+\end{verbatim}
+
+
+\end{landscape}
+
+
+\end{document}
+

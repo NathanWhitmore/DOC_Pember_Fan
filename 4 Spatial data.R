@@ -278,6 +278,8 @@ plot.re <- left_join(plot.re, coords, by = "Plot")
 
 my.coord.sf <- my.coord %>% st_as_sf(coords = c("X", "Y"), crs = 2193)
 
+saveRDS(my.coord.sf, "my_coord_sf.rds")
+
 viz <- left_join(my.coord.sf, plot.re, by = "Plot")
 viz$Group <- substr(viz$Plot, 1, 2)
 

@@ -3,6 +3,7 @@ library(AICcmodavg)
 library(glmmTMB)
 library(DHARMa)
 library(glmmTMB)
+library(arm)
 
 # read in data
 ground <- read.csv("Ground cover2.csv")
@@ -84,7 +85,7 @@ non.vege <-  ground %>%
   GroundCover = fct_recode(
     GroundCover,
     "BG" = "BG",
-    "BG" = "BR",
+    "V" = "BR",  # getting rid of bare rock
     "V" = "Li",
     "V" = "L",
     "V" = "M",
@@ -101,11 +102,11 @@ bare.ground <- non.vege %>%
 bare.ground.wide <- bare.ground %>% 
   pivot_wider(names_from = GroundCover,
               values_from = Prop,
-              values_fill = 0.001)
+              values_fill = 0)
 
 # make sure there are no zeros or 1s
-bare.ground.wide$BG <- ifelse(bare.ground.wide$BG == 0, 0.001, bare.ground.wide$BG)
-bare.ground.wide$BG <- ifelse(bare.ground.wide$BG == 1, 0.999, bare.ground.wide$BG)
+# bare.ground.wide$BG <- ifelse(bare.ground.wide$BG == 0, 0.001, bare.ground.wide$BG)
+# bare.ground.wide$BG <- ifelse(bare.ground.wide$BG == 1, 0.999, bare.ground.wide$BG)
 
 # read in spatial data
 my.coord.sf <- readRDS("my_coord_sf.rds")
@@ -126,7 +127,6 @@ fence <- st_read("fence line/Fence_line.json")
 # incorporate fence line 
 fence <- fence  %>% st_transform(crs = 2193)
 
-
 # finalised data set
 final.bare.wide <- bare.wide.sf
 
@@ -137,33 +137,98 @@ final.bare.wide$fence.dist <- as.numeric(
 
 st_geometry(final.bare.wide) <- NULL
 
-# model selection
+##### HURDLE MODEL
+final.bare.wide$hurdle <- ifelse(final.bare.wide$BG !=0, 1, 0)
 
-Cand.models.sub <- list()
+Cand.models.hurd <- list()
 
-Cand.models.sub[[1]] <- glmmTMB(BG ~ 1 + (1|Plot/Subplot), family = beta_family(link = "logit"), 
+Cand.models.hurd[[1]] <- glmmTMB(hurdle ~ 1 + (1|Plot/Subplot), family = "binomial", 
                                 data = final.bare.wide)
-Cand.models.sub[[2]] <- glmmTMB(BG ~ Year  + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.hurd[[2]] <- glmmTMB(hurdle ~ Year  + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
-Cand.models.sub[[3]] <- glmmTMB(BG ~ as.factor(Year) + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.hurd[[3]] <- glmmTMB(hurdle ~ fence.dist + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
-Cand.models.sub[[4]] <- glmmTMB(BG ~ fence.dist + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.hurd[[4]] <- glmmTMB(hurdle ~ Year + fence.dist + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
-Cand.models.sub[[5]] <- glmmTMB(BG ~ Year + fence.dist + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.hurd[[5]] <- glmmTMB(hurdle ~ as.factor(Year) + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
+
 
 # create a vector of names to trace back models in set
-Modnames <- paste("mod", 1:length(Cand.models.sub), sep = " ")
+Modnames <- paste("mod", 1:length(Cand.models.hurd), sep = " ")
 Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
-                      unlist(lapply(Cand.models.sub, formula))))
+                      unlist(lapply(Cand.models.hurd, formula))))
 
 # AIC table to 4 digits
-w.subplot <- aictab(cand.set = Cand.models.sub, modnames = Modnames, sort = TRUE)
-w.subplot
+hurdle <- aictab(cand.set = Cand.models.hurd, modnames = Modnames, sort = TRUE)
+hurdle
 
 # summary
-summary(Cand.models.sub[[3]])
+summary(Cand.models.hurd[[5]])
+
+# diagnostics - all good no issues
+res <- simulateResiduals(Cand.models.hurd[[5]])
+plot(res)
 
 
+# PART 2 beta regression
+some.bg <- final.bare.wide %>% filter(BG != 0)
+
+# model selection
+
+Cand.models.presence <- list()
+
+Cand.models.presence[[1]] <- glmmTMB(BG ~ 1 + (1|Plot/Subplot), family = beta_family(link = "logit"), 
+                                data = some.bg)
+Cand.models.presence[[2]] <- glmmTMB(BG ~ Year  + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                data = some.bg)
+Cand.models.presence[[3]] <- glmmTMB(BG ~ fence.dist + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                data = some.bg)
+Cand.models.presence[[4]] <- glmmTMB(BG ~ Year + fence.dist + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                data = some.bg)
+Cand.models.presence[[5]] <- glmmTMB(BG ~ as.factor(Year) + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                data = some.bg)
+
+
+# create a vector of names to trace back models in set
+Modnames <- paste("mod", 1:length(Cand.models.presence), sep = " ")
+Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
+                      unlist(lapply(Cand.models.presence, formula))))
+
+# AIC table to 4 digits
+BG.presence <- aictab(cand.set = Cand.models.presence, modnames = Modnames, sort = TRUE)
+BG.presence
+
+# summary
+summary(Cand.models.presence[[4]])
+
+# diagnostics
+res <- simulateResiduals(Cand.models.presence[[4]])
+plot(res)
+
+plotResiduals(res, some.bg$Year)
+plotResiduals(res, some.bg$fence.dist)
+
+hist(some.bg$BG, breaks = 40)
+
+ggplot()+
+  geom_histogram(data = some.bg, aes(x = BG), binwidth =0.02)+
+  facet_wrap(~Year)
+
+some.bg %>%
+  count(BG, sort = TRUE)
+
+
+
+
+
+
+
+
+testOutliers(res, type = "bootstrap") # good
+testUniformity(res)
+testDispersion(res)
+
+plotResiduals(res, final.bare.wide$Year)
 
 

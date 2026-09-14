@@ -315,8 +315,6 @@ ggsave("Pember fan random effect fence spatial.png",
 summary(Models[[10]])
 ranef(Models[[10]])
 
-model_performance(Models[[10]])
-
 # fence distances 
 range(my.data$fence.dist)
 fence.mean <- mean(my.data$fence.dist)

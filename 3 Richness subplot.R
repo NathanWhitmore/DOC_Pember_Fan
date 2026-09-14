@@ -1,23 +1,18 @@
 library(tidyverse)
 library(readxl)
 library(randomcoloR)
-library(performance)
-library(gridExtra)
-library(AICcmodavg)
-library(glmmTMB)
-library(DHARMa)
-
 
 # don't use these just yet
-df.2019 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
+df.2018 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
                       sheet = "2019 data")
 
-df.2020.1 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                        sheet = "JAN 2020")
+df.2019 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
+                      sheet = "JAN 2020")
 
 # use these
-df.2020.12 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                         sheet = "Dec2020")
+
+df.2020 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
+                      sheet = "Dec2020")
 df.2021 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
                       sheet = "Dec2021")
 df.2022 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
@@ -34,9 +29,10 @@ df.2025 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
 # keep only standardised columns
 # had to add in ""conv ground cover" column to df.2019 and df.2020jan tabs
 
+
+df.2018 <- df.2018[,1:10]
 df.2019 <- df.2019[,1:10]
-df.2020.1<- df.2020.1[,1:10]
-df.2020.12 <- df.2020.12[,1:10]
+df.2020 <- df.2020[,1:10]
 df.2021 <- df.2021[,1:10]
 df.2022 <- df.2022[,1:10]
 df.2023 <- df.2023[,1:10]
@@ -44,9 +40,9 @@ df.2024 <- df.2024[,1:10]
 df.2025 <- df.2025[,1:10]
 
 # add in year
+df.2018$Year <- "2018"
 df.2019$Year <- "2019"
-df.2020.1$Year <- "2020.1"
-df.2020.12$Year <- "2020.12"
+df.2020$Year <- "2020"
 df.2021$Year <- "2021"
 df.2022$Year <- "2022"
 df.2023$Year <- "2023"
@@ -54,7 +50,7 @@ df.2024$Year <- "2024"
 df.2025$Year <- "2025"
 
 # combine
-df <- rbind(df.2019, df.2020.1, df.2020.12, df.2021, df.2022, df.2023, df.2024, df.2025)
+df <- rbind(df.2018, df.2019, df.2020, df.2021, df.2022, df.2023, df.2024, df.2025)
 
 # rename cover
 df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
@@ -62,6 +58,8 @@ df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
 # ground cover@ strip out ground cover
 ground.cover <- df %>% 
   filter(!(is.na(GroundCover)))
+
+write.csv(ground.cover, "Ground cover2.csv", row.names = FALSE)
 
 df <- df %>% 
   filter(is.na(GroundCover))
@@ -81,7 +79,10 @@ L5 <- mean(51:75)  / 100 # 4
 L6 <- mean(76:100) / 100 # 5
 
 # expedited removal of errors
-df <- df %>% filter(!(Cover %in% c("??", "4?")))
+df <- df %>% filter(!(Cover %in% c("??")))
+df <- df %>%   mutate(
+  Cover = str_replace_all(Cover, fixed("4?"), "4")
+)
 
 # make low value for "P"
 df <-  df %>%

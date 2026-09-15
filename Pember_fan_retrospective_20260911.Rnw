@@ -1,0 +1,273 @@
+\documentclass{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{makeidx}
+\usepackage{multicol}
+\usepackage{sectsty}
+\usepackage[colorlinks = true,
+            linkcolor = blue,
+            urlcolor  = blue,
+            citecolor = blue,
+            anchorcolor = green]{hyperref}
+
+\usepackage{rotating}            
+\usepackage{pdflscape}     
+            
+\usepackage{natbib}
+\setcitestyle{aysep={}} 
+\bibliographystyle{apalike}
+
+
+% my ammendments
+\usepackage{xcolor}
+\usepackage{bookman}
+\usepackage{titlesec}
+\usepackage{pdflscape}
+\usepackage[font=small,labelfont=bf]{caption}
+
+\usepackage{sectsty} % sets colour of chapters
+\allsectionsfont{\sffamily \mdseries\color{blue!20!black!30!green}} 
+%\sectionfont{\color{purple}}
+
+\setkeys{Gin}{width=0.9\textwidth}
+
+
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{shaded}}{\end{shaded}}
+
+\newcommand{\mytilde}{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}
+
+
+
+
+\begin{document}
+
+
+
+% title page
+\begin{titlepage}
+\vspace*{\stretch{1.0}}
+
+
+
+\noindent\normalsize\textsf{A report prepared for:} 
+
+\vspace{3mm}
+
+\noindent\normalsize\textsf{\textbf{Department of Conservation}}
+
+\begin{center}
+\vspace{20mm}
+
+{\fontfamily{ppl}\selectfont
+    \textcolor{blue!20!black!30!green}{\Large\Huge{\textsf{\textbf{The Pember Fan: a retrospective analysis}
+}}}}
+
+\vspace{3mm}
+
+
+
+\end{center}
+
+\vspace{80mm}
+
+\begin{flushright}
+\noindent\textbf{\textsf{Nathan Whitmore}}\\
+
+
+
+\noindent \textsf{nathan@reproducible.co.nz}\\
+\noindent \textsf{11 September 2026}
+
+\end{flushright}
+
+\vspace{5mm}
+
+
+\vspace*{\stretch{2.0}}
+
+\end{titlepage}
+
+
+
+
+
+
+\section*{Summary}
+
+\begin{shaded}
+
+\noindent The 
+
+
+\end{shaded}
+
+
+\section*{Background}
+
+The Pember Fan is an alluvial outwash surface in Lees Valley, North Canterbury, formed from gravels deposited where the Ashley/Rakahuri River emerges into the valley.  The fan supports a grassland which includes several nationally threatened and at-risk plants, most notably the nationally critical Lees Valley daisy (\emph{Brachyscome pinnata}), whose only known natural population occurs there. Other threatened species include \emph{Gingidia enysii}, \emph{Sonchus novae-zelandiae} and \emph{Raoulia monroi}.
+
+In 2019 the Department of Conservation established monitoring programme based on 30 plots (each with 20 subplots) to monitor vegetative changes in this ecosystem through time. The underlying purpose of this monitoring programme was to inform management. Key metrics focused on changes in:
+
+\begin{itemize}
+  \item Indigenous biodiversity
+  \item Plant composition (especially threatened species) 
+  \item Ground cover
+\end{itemize}
+
+\section*{Purpose of current analysis}
+
+It is hypothesised that the current grazing regime is insufficient to regulate the crowding out of native herbs by exotic grasses at the site. Going forward it was agreed that a two stage analysis of the data would take place:
+
+\begin{itemize}
+  \item \textbf{Stage 1:} Would consist of a series of retrospective analyses to understand the trajectories at the site in respect of the three metrics previously identified. The deliverables were to include a short report that would inform a discussion with Richard Clayton and Ellen Cieraad regarding on the direction of the next stage.
+  \item \textbf{Stage 2:} Based on the decisions undertaken at the end of Stage 1, the signals present in the data, and operational constraints, a series of statistical tools would be employed to identify the design parameters required to detect the effectiveness future management. At the time of writing it is unclear whether what type of inferential study would be likely to be employed (e.g. causal inference, a BACI-like study, or a before-after intervention).
+\end{itemize}
+
+
+
+
+\section*{Exploratory analysis}
+
+I began my analysis began with some simple proof of concept analyses involving indigenous biodiversity and sequentially introducing complexity. Such an approach ensures that any mistakes or misunderstanding in purpose, or underlying data can be quickly identified and corrected. Furthermore, such an approach allows us to identify any design and convergence issues which will likely affect the wider suite of metrics.
+
+
+\subsection*{Indigenous biodiversity}
+
+Initial exploratory modelling focused on indigenous biodiversity due to its high tangibility. When indigenous biodiversity is only assessed at the plot level a pattern (top-ranked model: \mytilde \emph{Year * Exotic + (1 $\mid$ Plot)}, AIC weight = 0.74) emerges in which indigenous biodiversity appears to reduce over time along with exotic biodiversity (Figure \ref{fig:simpl.biodiversity}). This model was found to have good predictive agreement; thereby suggesting the community might be becoming more depauperate over time. However, upon discussion the pattern was regarded as potentially spurious due to the sensitivity of the plot-level metric to chance, non-representative species occurrences. Further discussion led to the request to retain the nested design (i.e. 1 $\mid$ Plot/Subplot) regardless if the random effects for a particular metric were supported in each particular case. 
+
+During the exploratory process I identified that there was meaningful underdispersion (i.e the variance in biodiversity results was less than expected), use of the generalised Poisson distribution family improved diagnostics but only use of a Conway-Maxwell Poisson distribution settled them to a desirable level. However, the Conway-Maxwell Poisson distribution proved to have a massive impact on computability (with inclusion of subplot level random effects causing such slowness it effectively negated any practical usage). Given that the coefficients produced by generalised Poisson and Conway-Maxwell Poisson distributions were generally very similar to each other I was advised to use to the generalised Poisson.
+
+
+\subsection*{Spatial signal in random effects}
+
+When the plot points were mapped it was revealed that while the CA plots were well dispersed across the fan, the RR plots were tightly clustered within the reserve which is found on the southern edge of the fan. Such tight spatial clustering typically presents a problem in terms of sampling bias and raises issues of spatial auto-correlation. Upon suggestion from Ellen Cieraad I implemented a series of models which examined whether the response variable was associated with a decaying distance relationship with neighbouring observations i.e. via a \emph{exp(pos + 0 $\mid$ spatial\_group)}. These models failed to converge leading me to suspect there might be a directional gradient underpinning the random errors. Formal tests of the random errors via Moran's I test revealed that there was likely to be spatial auto-correlation. 
+
+Plotting the random errors associated with the top-ranked model suggested a spatial relationship running perpendicular to the Ashley River (Figure \ref{fig:spatial.signal}). I then tested Richard Clayton's suggestion that the relationship might be better described by the relationship with the fence line. Indeed, modelling with both terms revealed that there was likely some gradient influencing the biodiversity response associated with distance from the fence line (Figure \ref{fig:signal.corrected}). Inclusion of this term resulted in the random errors associated with plot diminishing substantially, and a new top-ranked model being established. 
+
+The predictions from the new top-ranked model suggest that subplots found closer to the fence line are likely to loose indigenous species at a faster rate than those located further away (Figure \ref{fig:distance.fence}).
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Biodiversity plot modelled and correlation.png"}
+     \caption{The predicted plot level diversity changes through time. Four plots are plotted for reference.}
+     \label{fig:simpl.biodiversity}
+     
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember fan random effect spatial signal.png"}
+     \caption{The uncorrected distribution of random errors exhibiting an apparant gradient from fence line to river.}
+     \label{fig:spatial.signal}
+     
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember fan random effect fence spatial.png"}
+     \caption{Incorporation of distance from fence line diminished unexplained random effects.}
+     \label{fig:signal.corrected}
+     
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember fan distance from fence.png"}
+     \caption{Incorporation of distance from fence line diminished unexplained random effects.}
+     \label{fig:distance.fence}
+     
+\end{figure}
+\end{landscape}
+
+\subsection*{Bareground cover}
+
+While other cover classes seem to be stable bare ground appears to be disappearing from the Pember Fan (Figure \ref{fig:bare} \& \ref{fig:bgcover}).
+
+A hurdle model was used to assess changes in bare ground cover (logistic regression to assess presence-absence followed by a beta binomial regression to determine proportion of bare ground)
+
+The presence of bare ground was associated with  year (top ranked model: \emph{as.factor(Year) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.73) with bare ground diminishing over time (from an average of 18.2\%  in 2018 to 2.6\% in 2026).
+
+Modelling suggest that the proportion of bare ground increased with proximity to the fence and was declining over time (top ranked mode: \emph{Year + scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.43). However this model had multimodal residuals, suggesting the possible hidden process. Graphing appeared to confirm that bare ground seems to appear in quantised clumps, suggesting that there may be underlying hidden process (Figure \ref{fig:multimodel}).
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Changes in ground cover.png"}
+     \caption{Bare ground seems to disappearing from the Pember Fan.}
+     \label{fig:bare}
+     
+\end{figure}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Cover proportion.png"}
+     \caption{Bare ground is disappearing from the Pember Fan.}
+     \label{fig:bgcover}
+     
+\end{figure}
+\end{landscape}
+
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Multimodel bareground proportions.png"}
+     \caption{Bare ground seems to appear in quantised clumps, suggesting the potential for a hidden process.}
+     \label{fig:multimodel}
+     
+\end{figure}
+\end{landscape}
+
+
+\subsection*{Key species}
+
+\emph{Brachyscome pinnata} appears to be constrained to the southern portion of the fan and appears to be fast disappearing(Figure \ref{fig:brapin}). Intensive modelling revealed that there was no support for subplot random effects and their inclusion was an impediment for robust modelling (causing numerous diagnostic issues).
+
+Preliminary modelling (top-ranked model \emph{Year + scale(fence.dist) + (1 | Plot)}, AICc weight = 0.80), suggests the presence of \emph{Brachyscome pinnata} is declining \mytilde 12\% per year. 
+
+There is no evidence that \emph{Sonchus novae-zelandiae} is declining but rather it's presence maybe associated with a gradient extending from the fence (Figure \ref{fig:sonnov}; top-ranked model \emph{scale(fence.dist) + (1 $\mid$ Plot)}, AICc weight = 0.40). However, the second ranked model was a null model thereby suggesting there is effectively no detectable pattern whatsoever (\emph{1 + (1 $\mid$ Plot)}, AICc weight = 0.33).
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Brachyscome pinnata.png"}
+     \caption{\emph{Brachyscome pinnata} is only found on the southern portion of the fan and appears to be fast disappearing.}
+     \label{fig:brapin}
+     
+\end{figure}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Sonchus novae-zelandiae.png"}
+     \caption{\emph{Sonchus novae-zelandiae} is only found on the southern portion of the fan but does not appear to be at imminent risk of local extinction.}
+     \label{fig:sonnov}
+     
+\end{figure}
+\end{landscape}
+
+
+
+
+\end{document}
+

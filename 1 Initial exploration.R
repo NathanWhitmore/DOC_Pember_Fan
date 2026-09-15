@@ -70,7 +70,11 @@ L5 <- mean(51:75)  / 100 # 4
 L6 <- mean(76:100) / 100 # 5
 
 # expedited removal of errors
-df <- df %>% filter(!(Cover %in% c("??", "4?")))
+df <- df %>% filter(!(Cover %in% c("??")))
+df <- df %>%   mutate(
+  Cover = str_replace_all(Cover, fixed("4?"), "4")
+)
+
 
 # make low value for "P"
 df <-  df %>%

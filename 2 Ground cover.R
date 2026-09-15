@@ -91,6 +91,8 @@ ggplot()+
   xlab("\nMonitoring year")+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
 
+ggsave("Changes in ground cover.png", scale = 1.1, height = 6, width =8)
+
 # modelling
 
 non.vege <-  ground %>% 
@@ -246,10 +248,10 @@ BG.presence <- aictab(cand.set = Cand.models.prop, modnames = Modnames, sort = T
 BG.presence
 
 # summary
-summary(Cand.models.presence[[7]])
+summary(Cand.models.prop[[4]])
 
 # diagnostics performing very poorly
-res <- simulateResiduals(Cand.models.presence[[7]])
+res <- simulateResiduals(Cand.models.prop[[4]])
 plot(res)
 
 # give away multimodal residuals
@@ -265,12 +267,22 @@ ggplot()+
   theme(panel.grid = element_blank())+
   labs(y = "Count\n", x = "\nProportion")
 
+ggsave("Multimodel bareground proportions.png", scale = 1.1, height =6, width =8 )
+
 # all data
 ggplot()+
   theme_bw()+
-  geom_sf(data = cover.map.version %>% filter(BG >0.02),
-          aes(size = BG, colour = Transect))+
-  facet_wrap(~Year)
+  geom_sf(data = cover.map.version %>% filter(BG >0.005),
+          aes(size = BG, colour = Transect), alpha = 0.3)+
+  facet_wrap(~Year)+
+  theme(panel.grid = element_blank())+
+  theme(axis.ticks = element_blank())+
+  theme(axis.title = element_blank())+
+  theme(axis.text = element_blank())+
+  scale_colour_manual(values =c("purple", "forestgreen"))+
+  labs(colour = "Cover proportion")
+
+ggsave("Cover proportion.png", scale =1.1, height =6, width =8)
 
 # plot level
 plot.bg <- bare.wide.sf %>% 

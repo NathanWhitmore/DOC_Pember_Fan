@@ -52,6 +52,7 @@ df.2025$Year <- "2025"
 # combine
 df <- rbind(df.2018, df.2019, df.2020, df.2021, df.2022, df.2023, df.2024, df.2025)
 
+
 # rename cover
 df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
 

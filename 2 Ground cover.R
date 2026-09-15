@@ -4,6 +4,7 @@ library(glmmTMB)
 library(DHARMa)
 library(glmmTMB)
 library(arm)
+library(sf)
 
 # read in data
 ground <- read.csv("Ground cover2.csv")
@@ -14,10 +15,34 @@ ground <- as.data.frame(ground)
 # make subplot factor
 ground$Subplot <- as.factor(ground$Subplot)
 
+# make Cover factor
+ground$Cover <- as.factor(ground$Cover)
+
+# renaming categories
+ground <- ground %>%
+  ungroup() %>%
+  mutate(
+    GroundCover = fct_recode(
+      GroundCover,
+      "BG" = "BG2",
+      "BG" = "BG3",
+      "Li" = "Li3"
+    )
+  )
+
+
+# translate values to means
+L1 <- mean(0:1)  / 100 # 1
+L2 <- mean(1:5) / 100 # 2
+L3 <- mean(6:25)  / 100 # 3
+L4 <- mean(26:50) / 100 # 4
+L5 <- mean(51:75)  / 100 # 5
+L6 <- mean(76:100) / 100 # 6
+
 # make low value for "P"
 ground <-  ground %>%
   mutate(Perc = as.numeric(recode(Cover, 
-                                  "P" = P,
+                                 # "P" = P, # Not found in cover
                                   "1" = L1,
                                   "2" = L2,
                                   "3" = L3,
@@ -26,7 +51,7 @@ ground <-  ground %>%
                                   "6" = L6))
   )
 
-# make into dat.frame
+# make into dataframe
 ground <- as.data.frame(ground)
 
 # make subplot factor
@@ -43,19 +68,7 @@ ground$Proportion <- ground$Perc/ ground$Weight
 # make into data.frame
 ground <- as.data.frame(ground)
 
-# renaming categories
-ground <- ground %>%
-  ungroup() %>%
-  mutate(
-    GroundCover = fct_recode(
-      GroundCover,
-      "BG" = "BG2",
-      "BG" = "BG3",
-      "Li" = "Li3"
-    )
-  )
-
-# exploratory graphing 
+# check unique years
 unique(ground$Year)
 
 set.seed(18)
@@ -85,14 +98,14 @@ non.vege <-  ground %>%
   GroundCover = fct_recode(
     GroundCover,
     "BG" = "BG",
-    "V" = "BR",  # getting rid of bare rock
-    "V" = "Li",
-    "V" = "L",
-    "V" = "M",
+    "Not BG" = "BR",  # getting rid of bare rock
+    "Not BG" = "Li",
+    "Not BG" = "L",
+    "Not BG" = "M",
   )
 )
 
-# claulate sub plot proportions
+# calculate subplot proportions
 bare.ground <- non.vege %>%
   ungroup() %>%
   group_by(Year, Plot, Subplot, GroundCover) %>%
@@ -111,7 +124,7 @@ bare.ground.wide <- bare.ground %>%
 # read in spatial data
 my.coord.sf <- readRDS("my_coord_sf.rds")
 
-# join 
+# join with spatial data
 bare.wide.sf <- left_join(bare.ground.wide, my.coord.sf, by = "Plot") %>% 
   st_as_sf()
 
@@ -135,10 +148,23 @@ final.bare.wide$fence.dist <- as.numeric(
   )
 )
 
+# possible that transect type matters
+final.bare.wide$Transect <- substr(final.bare.wide$Plot,1,2)
+
+# map version
+cover.map.version <- final.bare.wide
+
+saveRDS(cover.map.version, "Cover sf.rds")
+
+# remove geometry
 st_geometry(final.bare.wide) <- NULL
 
 ##### HURDLE MODEL
-final.bare.wide$hurdle <- ifelse(final.bare.wide$BG !=0, 1, 0)
+
+# start with presence of bare ground
+final.bare.wide$hurdle <- ifelse(final.bare.wide$BG == 0, 0, 1)
+
+
 
 Cand.models.hurd <- list()
 
@@ -146,12 +172,22 @@ Cand.models.hurd[[1]] <- glmmTMB(hurdle ~ 1 + (1|Plot/Subplot), family = "binomi
                                 data = final.bare.wide)
 Cand.models.hurd[[2]] <- glmmTMB(hurdle ~ Year  + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
-Cand.models.hurd[[3]] <- glmmTMB(hurdle ~ fence.dist + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[3]] <- glmmTMB(hurdle ~ scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
-Cand.models.hurd[[4]] <- glmmTMB(hurdle ~ Year + fence.dist + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[4]] <- glmmTMB(hurdle ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
 Cand.models.hurd[[5]] <- glmmTMB(hurdle ~ as.factor(Year) + (1|Plot/Subplot), family = "binomial",
                                 data = final.bare.wide)
+Cand.models.hurd[[6]] <- glmmTMB(hurdle ~ Transect + (1|Plot/Subplot), family = "binomial", 
+                                 data = final.bare.wide)
+Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ Year  + Transect  +(1|Plot/Subplot), family = "binomial",
+                                 data = final.bare.wide)
+Cand.models.hurd[[8]] <- glmmTMB(hurdle ~ scale(fence.dist) + Transect + (1|Plot/Subplot), family = "binomial",
+                                 data = final.bare.wide)
+Cand.models.hurd[[9]] <- glmmTMB(hurdle ~ Year + scale(fence.dist) + Transect + (1|Plot/Subplot), family = "binomial",
+                                 data = final.bare.wide)
+Cand.models.hurd[[10]] <- glmmTMB(hurdle ~ as.factor(Year) + Transect + (1|Plot/Subplot), family = "binomial",
+                                 data = final.bare.wide)
 
 
 # create a vector of names to trace back models in set
@@ -171,52 +207,91 @@ res <- simulateResiduals(Cand.models.hurd[[5]])
 plot(res)
 
 
-# PART 2 beta regression
+# PART 2 beta regression (can we determine the % of bare ground when present)
 some.bg <- final.bare.wide %>% filter(BG != 0)
 
 # model selection
 
-Cand.models.presence <- list()
+Cand.models.prop <- list()
 
-Cand.models.presence[[1]] <- glmmTMB(BG ~ 1 + (1|Plot/Subplot), family = beta_family(link = "logit"), 
+Cand.models.prop[[1]] <- glmmTMB(BG ~ 1 + (1|Plot/Subplot), family = beta_family(link = "logit"), 
                                 data = some.bg)
-Cand.models.presence[[2]] <- glmmTMB(BG ~ Year  + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.prop[[2]] <- glmmTMB(BG ~ Year  + (1|Plot/Subplot), family = beta_family(link = "logit"),
                                 data = some.bg)
-Cand.models.presence[[3]] <- glmmTMB(BG ~ fence.dist + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.prop[[3]] <- glmmTMB(BG ~ scale(fence.dist) + (1|Plot/Subplot), family = beta_family(link = "logit"),
                                 data = some.bg)
-Cand.models.presence[[4]] <- glmmTMB(BG ~ Year + fence.dist + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.prop[[4]] <- glmmTMB(BG ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = beta_family(link = "logit"),
                                 data = some.bg)
-Cand.models.presence[[5]] <- glmmTMB(BG ~ as.factor(Year) + (1|Plot/Subplot), family = beta_family(link = "logit"),
+Cand.models.prop[[5]] <- glmmTMB(BG ~ as.factor(Year) + (1|Plot/Subplot), family = beta_family(link = "logit"),
                                 data = some.bg)
 
+Cand.models.prop[[6]] <- glmmTMB(BG ~ Transect + (1|Plot/Subplot), family = beta_family(link = "logit"), 
+                                     data = some.bg)
+Cand.models.prop[[7]] <- glmmTMB(BG ~ Year  + Transect + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                     data = some.bg)
+Cand.models.prop[[8]] <- glmmTMB(BG ~ scale(fence.dist) + Transect + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                     data = some.bg)
+Cand.models.prop[[9]] <- glmmTMB(BG ~ Year + scale(fence.dist) + Transect + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                     data = some.bg)
+Cand.models.prop[[10]] <- glmmTMB(BG ~ as.factor(Year) + Transect + (1|Plot/Subplot), family = beta_family(link = "logit"),
+                                     data = some.bg)
 
 # create a vector of names to trace back models in set
-Modnames <- paste("mod", 1:length(Cand.models.presence), sep = " ")
+Modnames <- paste("mod", 1:length(Cand.models.prop), sep = " ")
 Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
-                      unlist(lapply(Cand.models.presence, formula))))
+                      unlist(lapply(Cand.models.prop, formula))))
 
 # AIC table to 4 digits
-BG.presence <- aictab(cand.set = Cand.models.presence, modnames = Modnames, sort = TRUE)
+BG.presence <- aictab(cand.set = Cand.models.prop, modnames = Modnames, sort = TRUE)
 BG.presence
 
 # summary
-summary(Cand.models.presence[[4]])
+summary(Cand.models.presence[[7]])
 
-# diagnostics
-res <- simulateResiduals(Cand.models.presence[[4]])
+# diagnostics performing very poorly
+res <- simulateResiduals(Cand.models.presence[[7]])
 plot(res)
 
-plotResiduals(res, some.bg$Year)
-plotResiduals(res, some.bg$fence.dist)
+# give away multimodal residuals
+testOutliers(res, type = "bootstrap") # good
 
-hist(some.bg$BG, breaks = 40)
-
+# multimodal distribution of proportions
 ggplot()+
-  geom_histogram(data = some.bg, aes(x = BG), binwidth =0.02)+
+  theme_bw()+
+  geom_histogram(data = some.bg, aes(x = BG), binwidth =0.02, 
+                 fill = "forestgreen")+
+  facet_grid(Year~.)+
+  theme(aspect.ratio = 0.1)+
+  theme(panel.grid = element_blank())+
+  labs(y = "Count\n", x = "\nProportion")
+
+# all data
+ggplot()+
+  theme_bw()+
+  geom_sf(data = cover.map.version %>% filter(BG >0.02),
+          aes(size = BG, colour = Transect))+
   facet_wrap(~Year)
 
-some.bg %>%
-  count(BG, sort = TRUE)
+# plot level
+plot.bg <- bare.wide.sf %>% 
+  group_by(Year, Plot) %>%
+  summarise(mean = mean(BG))
+
+# make transect name
+plot.bg$Transect <- substr(plot.bg$Plot,1,2)
+  
+
+ggplot()+
+  theme_bw()+
+  geom_sf(data = plot.bg %>% filter(mean >0.02),
+          aes(size = mean, colour = Transect), alpha = 0.7)+
+  facet_wrap(~Year)+
+  scale_colour_manual(values = c("purple", "forestgreen"))+
+  theme(panel.grid = element_blank())+
+  theme(axis.ticks = element_blank())+
+  theme(axis.title = element_blank())+
+  theme(axis.text = element_blank())
+  
 
 
 
@@ -225,10 +300,8 @@ some.bg %>%
 
 
 
-testOutliers(res, type = "bootstrap") # good
-testUniformity(res)
-testDispersion(res)
 
-plotResiduals(res, final.bare.wide$Year)
+
+
 
 

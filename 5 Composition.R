@@ -114,33 +114,147 @@ df$Indigenous <- ifelse(df$TaxonBioStatus == "Exotic", "Exotic", "Indigenous")
 # filter for types
 # Just forbs (as an example)
 unique(df$TaxonGrowthForm)
-type <- df %>% filter(TaxonGrowthForm == "Forb") 
+
 
 # palette
 set.seed(18)
 unique.color <- length(unique(type$NVSSpeciesName))
 my.colour <- distinctColorPalette(k = unique.color)
 
-# graph
-ggplot()+
-  theme_bw()+
-  geom_col(data = type, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
-           position = "fill")+
-  facet_grid(Indigenous~TaxonGrowthForm)+
-  scale_fill_manual(values = my.colour)+
-  # scale_x_continuous(breaks = 2020:2025, labels =  2020:2025) +
+# stipulate my.theme
+
+my.theme <- theme_bw()+
   theme(axis.title = element_text(
-    face = 2,
-    size = 14,
-    colour = "grey40"
-  )) +
+  face = 2,
+  size = 14,
+  colour = "grey40"
+)) +
   theme(strip.text = element_text(
     size = 12,
     colour = "grey40"
   )) +
-  ylab("Proportion\n")+
-  xlab("\nMonitoring year")+
-  guides(fill = guide_legend(ncol = 2))+
-  labs(fill = "")+
   theme(aspect.ratio = 0.5)+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
+
+# filter for growth form
+type <- df %>% filter(TaxonGrowthForm == "Forb") 
+
+# graph
+ggplot()+
+  geom_col(data = type, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
+           position = "fill")+
+  facet_grid(Indigenous~TaxonGrowthForm)+
+  scale_fill_manual(values = my.colour)+
+  guides(fill = guide_legend(ncol = 2))+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  labs(fill = "")+
+  my.theme
+ 
+
+
+
+# all types
+
+set.seed(18)
+unique.color <- length(unique(df$NVSSpeciesName))
+my.colour <- distinctColorPalette(k = unique.color)
+
+# graph all vege
+ggplot()+
+  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = TaxonBioStatus), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")
+
+names(df)
+
+# by growth form
+ggplot()+
+  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = TaxonGrowthForm), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")
+
+
+names(df)
+
+# mix
+df$GrowthBio <- paste(df$TaxonGrowthForm, df$Indigenous)
+
+# add in transect
+
+df$Transect <- substring(df$Plot,1,2)
+
+ggplot()+
+  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = GrowthBio), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_wrap(~Transect)
+
+
+# grasses
+grass <- df %>% filter(TaxonGrowthForm  == "Graminoid")
+
+names(grass)
+
+ggplot()+
+  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = GrowthBio), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_wrap(Transect~Indigenous)
+
+ggplot()+
+  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_wrap(Transect~Indigenous)+
+  scale_fill_manual(values = my.colour)
+
+
+my.plot <- ggplot()+
+  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_grid(Transect~Indigenous)+
+  scale_fill_manual(values = my.colour)
+
+
+library(plotly)
+
+ggplotly(my.plot)
+         
+         ,  tooltip = "NVSSpeciesName") %>%   
+  config(displayModeBar = FALSE)
+
+ggplotly(
+  my.plot,
+  tooltip = "text"
+) %>%
+  config(displayModeBar = FALSE)
+
+ 
+  
+
+my.plot <- ggplot(
+  df,
+  aes(
+    x = factor(Year),
+    y = Proportion,
+    fill = NVSSpeciesName
+  )
+) +
+  geom_col(position = "fill") +
+  ylab("Proportion\n") +
+  xlab("\nMonitoring year") +
+  facet_wrap(vars(Transect, Indigenous)) +
+  scale_fill_manual(values = my.colour)
+
+ggplotly(my.plot)  
+
+
+

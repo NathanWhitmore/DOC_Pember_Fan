@@ -1,128 +1,12 @@
 library(tidyverse)
 library(readxl)
 library(randomcoloR)
+library(plotly)
 
-# don't use these just yet
-df.2018 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "2019 data")
-
-df.2019 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                        sheet = "JAN 2020")
-
-# use these
-
-df.2020 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                         sheet = "Dec2020")
-df.2021 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2021")
-df.2022 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2022")
-df.2023 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2023")
-df.2024 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2024")
-df.2025 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2025")
-df.2025 <- read_excel("Copy of NC_LEESVALLEY_MONITORING_DEC2025.xlsx",
-                      sheet = "Dec2025")
-
-# keep only standardised columns
-# had to add in ""conv ground cover" column to df.2019 and df.2020jan tabs
-
-
-df.2018 <- df.2018[,1:10]
-df.2019 <- df.2019[,1:10]
-df.2020 <- df.2020[,1:10]
-df.2021 <- df.2021[,1:10]
-df.2022 <- df.2022[,1:10]
-df.2023 <- df.2023[,1:10]
-df.2024 <- df.2024[,1:10]
-df.2025 <- df.2025[,1:10]
-
-# add in year
-df.2018$Year <- "2018"
-df.2019$Year <- "2019"
-df.2020$Year <- "2020"
-df.2021$Year <- "2021"
-df.2022$Year <- "2022"
-df.2023$Year <- "2023"
-df.2024$Year <- "2024"
-df.2025$Year <- "2025"
-
-# combine
-df <- rbind(df.2018, df.2019, df.2020, df.2021, df.2022, df.2023, df.2024, df.2025)
-
-# rename cover
-df <- df %>% rename(Cover = `Rooted inside Ring / Cover class`)
-
-# ground cover@ strip out ground cover
-df <- df %>% 
-  filter(is.na(GroundCover))
-
-
-# change cover values to perc
-# : 1 = <1% cover, 2= 1-5%, 3=6-25%, 4=26-50%, 5=51-75%, 6=76-100%).
-
-P <- 0.05 / 100
-L1 <- mean(0:1)  / 100 #p
-L2 <- mean(1:5) / 100 # 1
-L3 <- mean(6:25)  / 100 # 2
-L4 <- mean(26:50) / 100 # 3
-L5 <- mean(51:75)  / 100 # 4
-L6 <- mean(76:100) / 100 # 5
-
-# expedited removal of errors
-df <- df %>% filter(!(Cover %in% c("??", "4?")))
-
-# make low value for "P"
-df <-  df %>%
-  mutate(Perc = as.numeric(recode(Cover, 
-                                  "P" = P,
-                                  "1" = L1,
-                                  "2" = L2,
-                                  "3" = L3,
-                                  "4" = L4,
-                                  "5" = L5,
-                                  "6" = L6))
-  )
-
-# make into dat.frame
-df <- as.data.frame(df)
-
-# make subplot factor
-df$Subplot <- as.factor(df$Subplot)
-
-# summarise by cover
-df <- df %>% 
-  group_by(Year, Plot, Subplot) %>%
-  mutate(Weight = sum(Perc, na.rm = TRUE))
-
-df <- as.data.frame(df)
-df$GroundCover <- NULL
-df$`Overhanging Ring` <- NULL
-
-# corrected perc
-df$Proportion <- df$Perc/ df$Weight
-df$Proportion  <- ifelse(is.na(df$Proportion), 0, df$Proportion)
-df$Perc <- NULL
-df$Weight <- NULL
-df$Cover <- NULL
-
-# Indigenous comparison
-df$Indigenous <- ifelse(df$TaxonBioStatus == "Exotic", "Exotic", "Indigenous")
-
-# filter for types
-# Just forbs (as an example)
-unique(df$TaxonGrowthForm)
-
-
-# palette
-set.seed(18)
-unique.color <- length(unique(type$NVSSpeciesName))
-my.colour <- distinctColorPalette(k = unique.color)
+# load modified data frames
+df <- readRDS("Pember.rds")
 
 # stipulate my.theme
-
 my.theme <- theme_bw()+
   theme(axis.title = element_text(
   face = 2,
@@ -136,25 +20,7 @@ my.theme <- theme_bw()+
   theme(aspect.ratio = 0.5)+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
 
-# filter for growth form
-type <- df %>% filter(TaxonGrowthForm == "Forb") 
-
-# graph
-ggplot()+
-  geom_col(data = type, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
-           position = "fill")+
-  facet_grid(Indigenous~TaxonGrowthForm)+
-  scale_fill_manual(values = my.colour)+
-  guides(fill = guide_legend(ncol = 2))+
-  ylab("Proportion\n")+
-  xlab("\nMonitoring year")+
-  labs(fill = "")+
-  my.theme
- 
-
-
-
-# all types
+# Taxon Biostatus
 
 set.seed(18)
 unique.color <- length(unique(df$NVSSpeciesName))
@@ -162,99 +28,204 @@ my.colour <- distinctColorPalette(k = unique.color)
 
 # graph all vege
 ggplot()+
+  theme_bw()+
   geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = TaxonBioStatus), 
            position = "fill")+
   ylab("Proportion\n")+
   xlab("\nMonitoring year")
 
-names(df)
+ggsave("TaxonBiostatus.png", scale = 1.1, height =6, width =8)
 
-# by growth form
+# TaxonGrowthForm
 ggplot()+
+  theme_bw()+
   geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = TaxonGrowthForm), 
            position = "fill")+
   ylab("Proportion\n")+
   xlab("\nMonitoring year")
 
+ggsave("TaxonGrowthForm.png", scale = 1.1, height =6, width =8)
 
-names(df)
-
-# mix
+# make dual carrier
 df$GrowthBio <- paste(df$TaxonGrowthForm, df$Indigenous)
 
 # add in transect
-
 df$Transect <- substring(df$Plot,1,2)
 
 ggplot()+
+  theme_bw()+
   geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = GrowthBio), 
            position = "fill")+
   ylab("Proportion\n")+
   xlab("\nMonitoring year")+
   facet_wrap(~Transect)
 
+ggsave("TaxonGrowthForm by Transect type.png", scale = 1.1, height =6, width =8)
 
-# grasses
-grass <- df %>% filter(TaxonGrowthForm  == "Graminoid")
 
-names(grass)
+
+
 
 ggplot()+
+  theme_bw()+
   geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = GrowthBio), 
            position = "fill")+
   ylab("Proportion\n")+
   xlab("\nMonitoring year")+
-  facet_wrap(Transect~Indigenous)
+  facet_grid(Transect~Indigenous)
 
-ggplot()+
-  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
-           position = "fill")+
-  ylab("Proportion\n")+
-  xlab("\nMonitoring year")+
-  facet_wrap(Transect~Indigenous)+
-  scale_fill_manual(values = my.colour)
+ggsave("TaxonGrowthForm by Transect x Biostatus.png", scale = 1.1, height =6, width =8)
 
+
+
+############plotly
+
+# set.seed(18)
+# unique.color <- length(unique(sum.all$NVSSpeciesName))
+# my.colour <- distinctColorPalette(k = unique.color)
+
+library(plotly)
+
+df$Year <- as.factor(df$Year)
+
+sum.all <- df %>%
+  group_by(Year, Transect, Indigenous,TaxonGrowthForm) %>%
+  summarise(Total = sum(Proportion)) %>%
+  ungroup()
+
+sum.all <- sum.all %>%
+  group_by(Year, Transect, Indigenous) %>%
+  mutate(Denominator = sum(Total))
+
+sum.all <- sum.all %>%
+  mutate(Proportion = round(Total/Denominator,3))
+
+# sum.all <- sum.all %>% arrange(TaxonGrowthForm)
 
 my.plot <- ggplot()+
-  geom_col(data = df, aes(x = as.factor(Year), y = Proportion, fill = NVSSpeciesName), 
+  theme_bw()+
+  geom_col(data = sum.all, aes(x = Year, y = Proportion, 
+                               fill = TaxonGrowthForm), 
            position = "fill")+
   ylab("Proportion\n")+
   xlab("\nMonitoring year")+
   facet_grid(Transect~Indigenous)+
-  scale_fill_manual(values = my.colour)
+  theme(legend.position = "none")
+
+# scale_fill_manual(values = my.colour)
+
+ggplotly(my.plot ) #, tooltip = "NVSSpeciesName")
 
 
-library(plotly)
-
-ggplotly(my.plot)
-         
-         ,  tooltip = "NVSSpeciesName") %>%   
-  config(displayModeBar = FALSE)
-
-ggplotly(
-  my.plot,
-  tooltip = "text"
-) %>%
-  config(displayModeBar = FALSE)
-
+# grasses
+grass <- df %>% filter(TaxonGrowthForm  == "Graminoid")
  
-  
+grass.all <- grass %>%
+  group_by(Year, Transect, NVSSpeciesName) %>%
+  summarise(Total = sum(Proportion)) %>%
+  ungroup()
 
-my.plot <- ggplot(
-  df,
-  aes(
-    x = factor(Year),
-    y = Proportion,
-    fill = NVSSpeciesName
-  )
-) +
-  geom_col(position = "fill") +
-  ylab("Proportion\n") +
-  xlab("\nMonitoring year") +
-  facet_wrap(vars(Transect, Indigenous)) +
-  scale_fill_manual(values = my.colour)
+grass.all  <- grass.all  %>%
+  group_by(Year, Transect) %>%
+  mutate(Denominator = sum(Total))
 
-ggplotly(my.plot)  
+grass.all <- grass.all %>%
+  mutate(Proportion = round(Total/Denominator,4))
 
 
+my.grass <- ggplot()+
+  theme_bw()+
+  geom_col(data = grass.all, aes(x = Year, y = Proportion, 
+                               fill = NVSSpeciesName), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_grid(.~Transect)+
+  theme(legend.position = "none")+
+  ggtitle("Grasses only")
+
+ggplotly(my.grass ) 
+
+# restricted for ggplot
+
+top8 <- grass.all %>%
+  group_by(NVSSpeciesName) %>%
+  summarise(total = sum(Proportion, na.rm = TRUE)) %>%
+  slice_max(total, n = 8) %>%
+  pull(NVSSpeciesName)
+
+grass.all.top8 <- grass.all
+grass.all.top8$Species <- ifelse(grass.all.top8$NVSSpeciesName %in% top8,
+                                  grass.all.top8$NVSSpeciesName, "Other")
+
+
+ggplot()+
+  theme_bw()+
+  geom_col(data = grass.all.top8, aes(x = Year, y = Proportion, 
+                                 fill = Species), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_grid(.~Transect)
+
+
+ggsave("Top 8 grass species.png", scale = 1.1, height =6, width =8)
+
+sort(unique(grass.all$NVSSpeciesName))
+
+# forbs
+
+forbs <- df %>% filter(TaxonGrowthForm  == "Forb")
+
+forbs.all <- forbs %>%
+  group_by(Year, Transect, NVSSpeciesName) %>%
+  summarise(Total = sum(Proportion)) %>%
+  ungroup()
+
+forbs.all  <- forbs.all  %>%
+  group_by(Year, Transect) %>%
+  mutate(Denominator = sum(Total))
+
+forbs.all <- forbs.all %>%
+  mutate(Proportion = round(Total/Denominator,4))
+
+my.forbs <- ggplot()+
+  theme_bw()+
+  geom_col(data = forbs.all, aes(x = Year, y = Proportion, 
+                                 fill = NVSSpeciesName), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_grid(.~Transect)+
+  theme(legend.position = "none")+
+  ggtitle("Forbs only")
+
+ggplotly(my.forbs ) 
+
+# top 8
+
+sort(unique(forbs$NVSSpeciesName))
+
+top8.forbs <- forbs %>%
+  group_by(NVSSpeciesName) %>%
+  summarise(total = sum(Proportion, na.rm = TRUE)) %>%
+  slice_max(total, n = 8) %>%
+  pull(NVSSpeciesName)  
+
+
+forbs.all.top8 <- forbs.all
+forbs.all.top8$Species <- ifelse(forbs.all.top8$NVSSpeciesName %in% top8.forbs,
+                                 forbs.all.top8$NVSSpeciesName, "Other")
+
+ggplot()+
+  theme_bw()+
+  geom_col(data = forbs.all.top8, aes(x = Year, y = Proportion, 
+                                      fill = Species), 
+           position = "fill")+
+  ylab("Proportion\n")+
+  xlab("\nMonitoring year")+
+  facet_grid(.~Transect)
+
+
+ggsave("Top 8 forb species.png", scale = 1.1, height =6, width =8)
 

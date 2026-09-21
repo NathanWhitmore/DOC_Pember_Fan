@@ -12,6 +12,9 @@ pember <- readRDS("Pember.rds")
 cover.sf <- readRDS("Cover sf.rds")
 cover <- cover.sf
 
+# quick check
+# pember %>% filter(NVSSpeciesName == "Raoulia monroi")
+
 
 # standardise pembr year
 pember$Year <- as.numeric(pember$Year) - 2018
@@ -37,7 +40,10 @@ cover <- as.data.frame(cover)
 sort(unique(pember$NVSSpeciesName))
 
 # species
-my.species <- "Brachyscome pinnata"
+# my.species <- "Brachyscome pinnata"
+
+#my.species <- "Gingidia enysii"
+my.species <-"Raoulia monroi"
 # my.species <- "Sonchus novae-zelandiae"
 
 # my.species <- "Pilosella officinarum"

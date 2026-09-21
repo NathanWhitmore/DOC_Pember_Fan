@@ -295,15 +295,14 @@ Across the transects there was a trend towards increasing dominance of species w
 
 \subsection*{Key species}
 
-The four plant species present on the fan with the highest threat classification were singled out for modelling. These were:
+The three plant species present on the fan with the highest threat classification were singled out for modelling\footnote{I note that while the fan-leaved mat daisy \emph{Raoulia monroi} (Nationally Vulnerable) has been reported as being present in the valley it was not recorded in the current dataset.}. These were:
 
 \begin{itemize}
   \item Lees Valley Daisy,\emph{Brachyscome pinnata} (Nationally Critical)
   \item Limestone aniseed \emph{Gingidia enysii} (Nationally Endangered) 
   \item Dryland sow thistle \emph{Sonchus novae-zelandiae} (Nationally Vulnerable) 
-  \item fan-leaved mat daisy \emph{Raoulia monroi} (Nationally Vulnerable) 
+
 \end{itemize}
-Three key species are have beeen identified:
 
 
 

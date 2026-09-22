@@ -110,7 +110,7 @@ df$Proportion <- df$Perc/ df$Weight
 df$Proportion  <- ifelse(is.na(df$Proportion), 0, df$Proportion)
 df$Perc <- NULL
 df$Weight <- NULL
-df$Cover <- NULL
+
 
 # Indigenous comparison
 df$Indigenous <- ifelse(df$TaxonBioStatus == "Exotic", "Exotic", "Indigenous")

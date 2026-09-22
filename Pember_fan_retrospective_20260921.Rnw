@@ -299,11 +299,12 @@ The three plant species present on the fan with the highest threat classificatio
 
 \begin{itemize}
   \item Lees Valley Daisy,\emph{Brachyscome pinnata} (Nationally Critical)
-  \item Limestone aniseed \emph{Gingidia enysii} (Nationally Endangered) 
   \item Dryland sow thistle \emph{Sonchus novae-zelandiae} (Nationally Vulnerable) 
+    \item Limestone aniseed \emph{Gingidia enysii} (Nationally Endangered) 
 
 \end{itemize}
 
+As plant cover was estimated using ordered cover class categories. Cumulative link models with random effects were used to estimate 
 
 
 \emph{Brachyscome pinnata} appears to be constrained to the southern portion of the fan and appears to be fast disappearing (Figure \ref{fig:brapin}). Intensive modelling revealed that there was no support for subplot random effects and their inclusion was an impediment for robust modelling (causing numerous diagnostic issues).
@@ -311,6 +312,8 @@ The three plant species present on the fan with the highest threat classificatio
 Preliminary modelling (top-ranked model \emph{Year + scale(fence.dist) + (1 $\mid$ Plot)}, AICc weight = 0.80), suggests the presence of \emph{Brachyscome pinnata} is declining \mytilde 12\% per year. 
 
 There is no evidence that \emph{Sonchus novae-zelandiae} is declining but rather it's presence maybe associated with a gradient extending from the fence (Figure \ref{fig:sonnov}; top-ranked model \emph{scale(fence.dist) + (1 $\mid$ Plot)}, AICc weight = 0.40). However, the second ranked model was a null model thereby suggesting there is effectively no detectable pattern whatsoever (\emph{1 + (1 $\mid$ Plot)}, AICc weight = 0.33).
+
+\emph{Gingidia enysii} has only been found on two transects (once on in a single subplot on R10 and in five subplots on RR3). Modelling was restricted to RR3 and limited to null model and a year effect. The top-ranked model (\emph{1 + (1|Subplot)}) suggested the presence of \emph{G. enysii} was best explained as a simple average(AIC weight = 0.66), while the second-ranked model (\emph{Year  + (1|Subplot)}  suggested that the probablity of finding the species was declining year on year (AIC weight = 0.34). However, the species when present was found to be proportionally increasing year on year (\emph{Year + (1 | Subplot)}) due to a proliferation at a single subplot (i.e. RR3 Subplot 960).
 
 
 \begin{landscape}
@@ -329,6 +332,17 @@ There is no evidence that \emph{Sonchus novae-zelandiae} is declining but rather
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Sonchus novae-zelandiae.png"}
      \caption{\emph{Sonchus novae-zelandiae} is only found on the southern portion of the fan but does not appear to be at imminent risk of local extinction.}
+     \label{fig:sonnov}
+     
+\end{figure}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Gingidia enysii.png"}
+     \caption{\emph{Gingidia enysii} has only been found on two plots in the recreational reserve and only reliably at a single subplot.}
      \label{fig:sonnov}
      
 \end{figure}

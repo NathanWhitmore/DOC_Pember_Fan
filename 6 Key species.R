@@ -6,6 +6,7 @@ library(glmmTMB)
 library(arm)
 library(sf)
 library(performance)
+library(ordinal)
 
 # load modified data frames
 pember <- readRDS("Pember.rds")
@@ -13,8 +14,7 @@ cover.sf <- readRDS("Cover sf.rds")
 cover <- cover.sf
 
 # quick check
-# pember %>% filter(NVSSpeciesName == "Raoulia monroi")
-
+# pember %>% filter(NVSSpeciesName == "Raoulia monroi") # absent 
 
 # standardise pembr year
 pember$Year <- as.numeric(pember$Year) - 2018
@@ -22,7 +22,7 @@ pember$Year <- as.numeric(pember$Year) - 2018
 # simplify
 cover <- cover[, c("Year", "Plot", "Subplot", "BG", "fence.dist", "Transect")]
 pember <- pember[, c("Year", "Plot", "Subplot","NVSSpeciesName",
-                     "TaxonBioStatus", "TaxonGrowthForm", "Indigenous", "Proportion")]
+                     "TaxonBioStatus", "TaxonGrowthForm", "Indigenous",  "Proportion", "Cover")]
 
 # moniker
 cover$moniker <- paste(cover$Year, cover$Plot, cover$Subplot)
@@ -40,28 +40,42 @@ cover <- as.data.frame(cover)
 sort(unique(pember$NVSSpeciesName))
 
 # species
-# my.species <- "Brachyscome pinnata"
+my.species <- "Brachyscome pinnata"
 
-#my.species <- "Gingidia enysii"
-my.species <-"Raoulia monroi"
 # my.species <- "Sonchus novae-zelandiae"
-
-# my.species <- "Pilosella officinarum"
-
 pember$key.species <- ifelse(pember$NVSSpeciesName == my.species,
                              pember$Proportion, 
                              0 )
 
+# fix cover class
+pember$Cover <- ifelse(is.na(pember$Cover), 0, pember$Cover)
+pember$Cover <- factor(
+  pember$Cover,
+  levels = c("0", "P", "1", "2", "3", "4", "5", "6"),
+  ordered = TRUE
+)
+ 
 # pember$not.key.species <- 1 - pember$key.species 
 
 # simplify
+just.key.species <- pember %>% filter(pember$NVSSpeciesName == my.species)
+just.key.species <- just.key.species[, c("moniker", "Cover")]
+
+unique(just.key.species$Cover)
+
+# this fixes any possible accidental absences
 critical <- pember %>%
   group_by(Year, Plot, Subplot, moniker) %>%
   summarise(Species.prop = sum(key.species))
 
+critical <- left_join(critical, just.key.species, by = "moniker")
+
+# fix up cover class
+critical$Cover[is.na(critical$Cover)] <- "0"
+
 # spatial join
 all <- left_join(critical, cover, by = "moniker")
-head(all)
+
 
 # only keep presence data
 presences <- all %>% filter(Species.prop != 0)
@@ -70,27 +84,23 @@ head(presences)
 # correct for bare ground
 presences$correct.prop <- (1 - presences$BG) * presences$Species.prop
 
-ggplot()+
-  geom_point(data = presences, aes(y = correct.prop, x= BG))+
-  facet_wrap(~Year)
-
 # make spatial
 presences.sf <- st_as_sf(presences)
 
 # start with presence of bare ground
 all$correct.prop <- (1 - all$BG) * all$Species.prop
-all$hurdle <- ifelse(all$correct.prop == 0, 0, 1)
-all$hurdle <- ifelse(is.na(all$correct.prop), 0, all$hurdle)
+all$presence <- ifelse(all$correct.prop == 0, 0, 1)
+all$presence <- ifelse(is.na(all$correct.prop), 0, all$presence)
 
 # add X-Y coordinates
 all<- all %>% st_as_sf()
 all.coord <- st_coordinates(all)
 all <- cbind(all, all.coord )
 
+# check total should be 12000
 nrow(all)
 
-
-# restrict to southern section
+# restrict to southern section for Sonchus and Brachyscome
 all <- all %>% filter(Y < 5225800)
 
 # map
@@ -114,85 +124,189 @@ ggplot()+
   labs(size = "Corrected proportion")+
   theme(plot.title = element_text(face = "italic"))
 
-# ggsave("Brachyscome pinnata.png", scale =1.1, height = 6, width =8)
+ggsave("Brachyscome pinnata.png", scale =1.1, height = 6, width =8)
 # ggsave("Sonchus novae-zelandiae.png", scale =1.1, height = 6, width =8)
 
-# temporal autocorrection
 
-all$PlotSubplot <- interaction(
-  all$Plot,
-  all$Subplot,
-  drop = TRUE
-)
+# comparison of random effects suggests subplot okay but
+# zero inflation is not improving fit
 
-# comparison of random effects suggests subplot okay but...
-
-m1 <- glmmTMB(hurdle ~ Year + scale(fence.dist) + (1|Plot), family = "binomial",
+m1 <- glmmTMB(presence ~ Year + scale(fence.dist) + (1|Plot), family = "binomial",
                                  data = all, REML = TRUE)
-m2 <- glmmTMB(hurdle ~ Year + scale(fence.dist) + (1|Plot/Subplot), 
+m2 <- glmmTMB(presence ~ Year + scale(fence.dist) + (1|Plot/Subplot), 
+              family = "binomial",
+              data = all,
+              REML = TRUE)
+m3 <- glmmTMB(presence ~ Year + scale(fence.dist) + (1|Plot/Subplot), 
               ziformula = ~1,
               family = "binomial",
               data = all,
               REML = TRUE)
 
-m3 <- glmmTMB(hurdle ~ Year + scale(fence.dist) + (1|Plot/Subplot), 
-              ziformula = ~1,
-              family = "binomial",
-              data = all)
+AIC(m1,m2, m3)
 
-summary(m2)
-summary(m3)
-
-# m1 has poor residuals
+# introduction of subplot produces poorer residual fit
+# but we may have to live with it
 res <- simulateResiduals(m2)
 plot(res)
 
-# m2 is better but dominated by the fact most plots don't have the species
-AIC(m1, m2)
+# check issues to do with the number of zeros
 
-subplot.summary <- all %>%
+# state trasnition approach
+
+transitions <- all %>%
+  arrange(Plot, Subplot, Year) %>%
   group_by(Plot, Subplot) %>%
-  summarise(
-    n = n(),
-    n.pres = sum(hurdle == 1, na.rm = TRUE),
-    n.abs = sum(hurdle == 0, na.rm = TRUE),
-  ) %>%
   mutate(
-    status = case_when(
-      n.pres == 0 ~ "Always absent",
-      n.abs == 0 ~ "Always present",
-      TRUE ~ "Changes"
-    )
+    previous.state = lag(presence),
+    previous.year = lag(Year)
+  ) %>%
+  ungroup()
+
+
+transitions.no.na <- transitions %>%
+  filter(
+    !is.na(previous.state),
+    Year - previous.year == 1  # keep consecutive years
   )
 
+# table of state transitions
+with(transitions, table(previous.state, presence))
+
+# get table
 table(subplot.summary$status)
+
+head(all)
+
+all$Plot <- factor(all$Plot)
+all$Subplot <- factor(all$Subplot)
+
+all$SubplotID <- interaction(
+  all$Plot,
+  all$Subplot,
+  drop = TRUE
+)
+# ordinal regression
+m1 <- clmm(Cover ~ 1 + (1|Plot) + (1 | SubplotID), data = all)
+summary(m1)
+
+res <- simulateResiduals(m1)
+
+clmm.mod <- list()
+
+clmm.mod[[1]] <- clmm(Cover ~ 1 + (1|Plot) + (1 | Subplot), data = all)
+clmm.mod[[2]] <- clmm(Cover ~ Year  + (1|Plot) + (1 | SubplotID), data = all)
+clmm.mod[[3]] <- clmm(Cover ~ scale(fence.dist) + (1|Plot) + (1 | SubplotID), data = all)
+clmm.mod[[4]] <- clmm(Cover ~ Year + scale(fence.dist) + (1|Plot) + (1 | SubplotID), data = all)
+clmm.mod[[5]] <- clmm(Cover ~ as.factor(Year) + scale(fence.dist) + (1|Plot) + (1 | SubplotID),  data = all)
+clmm.mod[[6]] <- clmm(Cover ~ as.factor(Year) + (1|Plot) + (1 | SubplotID), data = all)
+
+# temporal auto correlation - cant really cope with a 
+# Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ as.factor(Year) + ar1(as.factor(Year) + 0 | Plot/Subplot) + (1|Plot/Subplot), 
+#                                  family = "binomial", 
+#                                   data = all)
+
+
+# create a vector of names to trace back models in set
+Modnames <- paste("mod", 1:length(clmm.mod), sep = " ")
+Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
+                      unlist(lapply(clmm.mod, formula))))
+
+# AIC table to 4 digits
+clmm.aic <- aictab(cand.set = clmm.mod, modnames = Modnames, sort = TRUE)
+clmm.aic
+
+# summary
+summary(clmm.mod[[5]])
+
+# checks - Plot random effect not really supported
+VarCorr(clmm.mod[[5]])
+ranef(clmm.mod[[5]])
+
+
+# predictions
+all$clmm.pred <- predict(clmm.mod[[5]], type = "class")
+
+
+# in order to obtain predicted values, switch to clmm2()
+# these give pretty much exactly the same values
+# in large part because PLot has no real effect
+
+# simplify scale distance
+fence.mean <- mean(all$fence.dist, na.rm = TRUE)
+fence.sd   <- sd(all$fence.dist, na.rm = TRUE)
+
+all$fence.dist.z <- 
+  (all$fence.dist - fence.mean) / fence.sd
+
+# make year a factor
+all$Year.f <- as.factor(all$Year)
+
+# run a simplified model (has the same predictions)
+clmm.pred <- clmm2(Cover ~ Year.f , 
+                          random = SubplotID, Hess = TRUE,  data = all)
+
+summary(clmm.mod[[5]])
+
+coef(clmm.mod[[5]])
+coef(clmm.pred)
+
+my.year <- c(0, clmm.mod[[5]]$beta[-8])
+subplot <- max(clmm.pred$ranef)
+
+store <- NULL
+
+for(i in 1:(length(my.year))+1){
+  
+  print[i]
+  
+C0 <- plogis(11.30656 - (my.year[i] + subplot))
+C1 <- plogis(12.61615 - (my.year[i] + subplot))
+C2 <- plogis(13.93582 - (my.year[i] + subplot))
+C3 <- plogis(15.64844 - (my.year[i] + subplot))
+C4 <- plogis(18.56875 - (my.year[i] + subplot))
+C5 <- plogis(22.25338 - (my.year[i] + subplot))
+
+
+store[[i]] <- data.frame(cover.0 = round(C0 - 0, 3),
+  cover.1 = round(C1 - C0, 3),
+  cover.2 = round(C2 - C1, 3),
+  cover.3 = round(C3 - C2, 3),
+  cover.4 = round(C4 - C3, 3),
+  cover.5 = round(C5 - C4, 3),
+  cover.6 = 1 - C5)
+
+}
+  
+
+
+
+
+
+
+
 
 # model selection only on southern portion
 # note scale(fence.dist) can nearly perfectly predict (1|Plot/Subplot)
 Cand.models.hurd <- list()
 
-Cand.models.hurd[[1]] <- glmmTMB(hurdle ~ 1 + (1|Plot/Subplot), family = "binomial", 
+Cand.models.hurd[[1]] <- glmmTMB(presence ~ 1 + (1|Plot/Subplot), family = "binomial", 
                                  data = all)
-Cand.models.hurd[[2]] <- glmmTMB(hurdle ~ Year  + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[2]] <- glmmTMB(presence ~ Year  + (1|Plot/Subplot), family = "binomial",
                                  data = all)
-Cand.models.hurd[[3]] <- glmmTMB(hurdle ~ scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[3]] <- glmmTMB(presence ~ scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
                                  data = all)
-Cand.models.hurd[[4]] <- glmmTMB(hurdle ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[4]] <- glmmTMB(presence ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
                                  data = all)
-Cand.models.hurd[[5]] <- glmmTMB(hurdle ~ as.factor(Year) + scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[5]] <- glmmTMB(presence ~ as.factor(Year) + scale(fence.dist) + (1|Plot/Subplot), family = "binomial",
                                  data = all)
-Cand.models.hurd[[6]] <- glmmTMB(hurdle ~ as.factor(Year) + (1|Plot/Subplot), family = "binomial",
+Cand.models.hurd[[6]] <- glmmTMB(presence ~ as.factor(Year) + (1|Plot/Subplot), family = "binomial",
                                  data = all)
 
-
-# temporal auto correlation
-# this produces an incredibly small value for ranef
-Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ as.factor(Year) + ar1(as.factor(Year) + 0 | Plot) + (1|Plot), family = "binomial", 
-                                  ziformula = ~1,
-                                  data = all)
-
-# ranef(Cand.models.hurd[[7]]
-# diagnose(Cand.models.hurd[[7]])
+# temporal auto correlation - cant really cope with a 
+# Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ as.factor(Year) + ar1(as.factor(Year) + 0 | Plot/Subplot) + (1|Plot/Subplot), 
+#                                  family = "binomial", 
+#                                   data = all)
 
 
 # create a vector of names to trace back models in set
@@ -201,21 +315,18 @@ Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1",
                       unlist(lapply(Cand.models.hurd, formula))))
 
 # AIC table to 4 digits
-hurdle <- aictab(cand.set = Cand.models.hurd, modnames = Modnames, sort = TRUE)
-hurdle
+hurdle.aic <- aictab(cand.set = Cand.models.hurd, modnames = Modnames, sort = TRUE)
+hurdle.aic
 
 # summary
 summary(Cand.models.hurd[[6]])
-ranef(Cand.models.hurd[[6]])
 
 # diagnostics - has issues
 res <- simulateResiduals(Cand.models.hurd[[6]])
 plot(res)
 
-summary(Cand.models.hurd[[6]])
-
 # check random effects
-ranef(Cand.models.hurd[[1]])
+ranef(Cand.models.hurd[[6]])
 
 # basic diagnostics
 testOutliers(res, type = "bootstrap") # okay
@@ -230,6 +341,7 @@ res.plot <- recalculateResiduals(
   res,
   group = all$Plot
 )
+
 
 # One coordinate pair per Plot (not subplot like in all)
 coords.plot <- all %>%
@@ -252,7 +364,6 @@ testSpatialAutocorrelation(
 )
 
 
-head(all)
 
 # PART 2 beta regression (can we determine the % of bare ground when present)
 plant.prop <- all %>% filter(Species.prop != 0)
@@ -302,26 +413,33 @@ plot(res)
 summary(Cand.models.prop[[9]])
 
 # model performance
-model_performance(Cand.models.prop[[2]])
+model_performance(Cand.models.prop[[9]])
+
+# random effects
+ranef(Cand.models.prop[[9]])
 
 # Model 9 singular 
 performance::check_singularity(Cand.models.prop[[9]])
 performance::check_singularity(Cand.models.prop[[2]])
 
-VarCorr(Cand.models.prop[[2]])
+VarCorr(Cand.models.prop[[9]])
 
 # average loss
 1-exp(-0.13608 )
 
 # make predictions
-plant.prop$predicted <- fitted(Cand.models.prop[[2]])
+plant.prop$predicted <- fitted(Cand.models.prop[[9]])
 plant.prop$group <- paste(plant.prop$Plot,  plant.prop$Subplot)
 
 # predictions
 ggplot()+
   theme_bw()+
   geom_line(data = plant.prop, aes(x = Year, y = predicted, 
-                                   group = group))
+                                   group = group, 
+                                   colour = Transect), lwd = 1)+
+  scale_colour_manual(values = c("purple", "forestgreen"))+
+  ylab("Predicted probability of presence\n")+
+  xlab("\nYear")
 
 ggsave("Expected loss")
 
@@ -333,9 +451,6 @@ ggplot()+
   xlab("\nPredicted") +
   ylab("Species proportion\n") +
   theme(panel.grid = element_blank())
-
-
-
 
 
 

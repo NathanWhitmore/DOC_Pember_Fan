@@ -5,6 +5,7 @@ library(DHARMa)
 library(glmmTMB)
 library(arm)
 library(sf)
+library(ordinal)
 
 # read in data
 ground <- read.csv("Ground cover2.csv")
@@ -70,6 +71,38 @@ ground <- as.data.frame(ground)
 
 # check unique years
 unique(ground$Year)
+
+
+# check histogram of cover for bare ground
+
+head(ground)
+unique(ground$GroundCover)
+bg <- ground %>% filter(GroundCover == "BG")
+bg$Cover <- as.numeric(as.character(bg$Cover))
+
+
+
+
+ggplot()+
+  theme_bw()+
+  geom_histogram(data = bg, aes(x = Cover), binwidth = 1, 
+                 colour = "white", 
+                 fill = "orange")+
+  facet_grid(~Year)+
+  theme(axis.title = element_text(
+    size = 14,
+    colour = "grey40"
+  )) +
+  theme(strip.text = element_text(
+    size = 12,
+    colour = "grey40"
+  ))+
+  theme(panel.grid = element_blank())+
+  ylab("Count\n")+
+  xlab("\nCover class")
+
+ggsave("Changes in ground coverclass.png", scale = 1.1, height = 6, width =8)
+
 
 set.seed(18)
 
@@ -303,17 +336,114 @@ ggplot()+
   theme(axis.ticks = element_blank())+
   theme(axis.title = element_blank())+
   theme(axis.text = element_blank())
+
+# cumulative link models
+
+# tidy data and join
+bg$Year <- bg$Year - 2019 
+bg$moniker <- paste(bg$Year, bg$Plot, bg$Subplot)
+bg$Year <- NULL
+bg$Plot <- NULL
+bg$Subplot <- NULL
+
+key <- final.bare.wide[, c("Year", "Plot", "Subplot", "fence.dist")]
+key$moniker <- paste(key$Year, key$Plot, key$Subplot)
+
+
+
+# bare ground cover
+
+bgc <- left_join(key, bg, by = "moniker")
+bgc$Cover <- ifelse(is.na(bgc$Cover), 0, bgc$Cover)
+bgc$Cover <- factor(bgc$Cover, 
+                    levels = c("0", "1", "2", "3", "4", "5", "6"),
+                    ordered = TRUE)
+
+levels(bgc$Cover)
+
+bgc$SubplotID <- interaction(
+  bgc$Plot,
+  bgc$Subplot,
+  drop = TRUE
+)
+
+
+clmm.mod <- list()
+
+clmm.mod[[1]] <- clmm(Cover ~ 1 + (1|Plot) + (1 | SubplotID), data = bgc)
+clmm.mod[[2]] <- clmm(Cover ~ Year  + (1|Plot) + (1 | SubplotID), data = bgc)
+clmm.mod[[3]] <- clmm(Cover ~ scale(fence.dist) + (1|Plot) + (1 | SubplotID), data = bgc)
+clmm.mod[[4]] <- clmm(Cover ~ Year + scale(fence.dist) + (1|Plot) + (1 | SubplotID), data = bgc)
+# clmm.mod[[5]] <- clmm(Cover ~ as.factor(Year) + scale(fence.dist) + (1|Plot) + (1 | Subplot),  data = bgc)
+# clmm.mod[[6]] <- clmm(Cover ~ as.factor(Year) + (1|Plot) + (1 | Subplot), data = bgc)
+
+# temporal auto correlation - cant really cope with a 
+# Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ as.factor(Year) + ar1(as.factor(Year) + 0 | Plot/Subplot) + (1|Plot/Subplot), 
+#                                  family = "binomial", 
+#                                   data = all)
+
+
+# create a vector of names to trace back models in set
+Modnames <- paste("mod", 1:length(clmm.mod), sep = " ")
+Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1", 
+                      unlist(lapply(clmm.mod, formula))))
+
+# AIC table to 4 digits
+clmm.aic <- aictab(cand.set = clmm.mod, modnames = Modnames, sort = TRUE)
+clmm.aic
+
+# summary
+summary(clmm.mod[[2]])
+
+# checks - Plot random effect are supported
+ranef(clmm.mod[[2]])
+
+# makes two columns for each random effect
+my.ranef <- ranef(clmm.mod[[2]]) %>% as.data.frame()
+my.ranef$total.random <- rowSums(my.ranef)
+
+
+# get betas
+my.year <- clmm.mod[[2]]$beta
+plot.subplot <- quantile(my.ranef$total.random, 0.95)
+
+store <- NULL
+
+my.year <- 0:7
+
+for(i in 1:8){
+
   
+C0 <- plogis(2.2836  - ( -0.33210 * my.year[i] + plot.subplot))
+C1 <- plogis(3.2312 - ( -0.33210 * my.year[i] + plot.subplot))
+C2 <- plogis(4.1715 - ( -0.33210 * my.year[i] + plot.subplot))
+C3 <- plogis(5.9794  - ( -0.33210 * my.year[i] + plot.subplot))
+C4 <- plogis(8.1624 - ( -0.33210 * my.year[i] + plot.subplot))
+C5 <- plogis(10.2834 - ( -0.33210 * my.year[i] + plot.subplot))
 
 
+store[[i]] <- data.frame(cover.0 = round(C0 - 0, 3),
+  cover.1 = round(C1 - C0, 3),
+  cover.2 = round(C2 - C1, 3),
+  cover.3 = round(C3 - C2, 3),
+  cover.4 = round(C4 - C3, 3),
+  cover.5 = round(C5 - C4, 3),
+  cover.6 = round(1 - C5, 3))
 
+}
 
+my.predictions  <- bind_rows(store)
+my.predictions$Year <- 2018:2025
 
+my.long <- my.predictions  |>
+  pivot_longer(cols = cover.0:cover.6,
+               names_to =  "Cover",
+               values_to = "Proportion")
 
+# filter out cover class 0
+my.long <-  my.long  |> filter(Cover != "cover.0")
 
-
-
-
-
-
+ggplot()+
+  geom_col(data = my.long, aes( x= Cover, y= Proportion))+
+  facet_grid(.~Year)
 

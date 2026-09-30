@@ -189,13 +189,10 @@ The predictions from the new top-ranked model suggest that samples found closer 
 
 \subsection*{Bare ground cover}
 
-Analyses of bare ground were conducted as cover classes via cumulative models and as approximate proportions (by transforming cover classes into proportions at the subplot level) via hurdle models.
+Analyses of bare ground were conducted as cover classes via cumulative link models ( they were also assessed as approximate proportions (by transforming cover classes into proportions at the subplot level via hurdle models see Appendix).
 
-While other cover classes on the fan appear to be stable it is evident that bare ground appears to be disappearing (Figure \ref{fig:barecoverclass}, \ref{fig:bare} \& \ref{fig:bgcover}).
+While other cover classes on the fan appear to be stable it is evident that bare ground appears to be disappearing rehardless of metric (Figure \ref{fig:barecoverclass}, \ref{fig:bare} \& \ref{fig:bgcover}).
 
-A hurdle model was used to assess changes in bare ground cover (logistic regression to assess presence-absence followed by a beta binomial regression to determine proportion of bare ground). The presence of bare ground was associated with  year (top ranked model: \emph{as.factor(Year) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.73) with bare ground diminishing over time (from an average of 18.2\% per subplot in 2018 to 2.6\% in 2026).
-
-Modelling suggest that the proportion of bare ground increased with proximity to the fence but was declining over time (top ranked mode: \emph{Year + scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.43). However this beta regression model had multimodal residuals, suggesting the existence of a potential hidden process (i.e. some semi-predictable factor we have not accounted for is driving a pattern in the amount of bare ground we are recording) . Graphing appeared to confirm that bare ground seems to appear in quantised clumps, suggesting that there may be underlying hidden process in play (Figure \ref{fig:multimodel}). While the existence of such a phenomenon is speculative localised disturbance caused by rabbit scrapes would potentially be one explanation.
 
 \vspace{3mm}
 
@@ -230,15 +227,6 @@ Modelling suggest that the proportion of bare ground increased with proximity to
 
 
 
-\begin{landscape}
-\begin{figure}[h]
-\centering
-     \includegraphics[width=18cm,keepaspectratio]{"Multimodel bareground proportions.png"}
-     \caption{Bare ground seems to appear in quantised clumps, suggesting the potential for a hidden process.  Key: Year 0 = summer 2018--2019, Year 7 = summer 2025--2026.}
-     \label{fig:multimodel}
-     
-\end{figure}
-\end{landscape}
 
 
 
@@ -390,6 +378,47 @@ During the exploratory process I identified that there was meaningful underdispe
      
 \end{figure}
 \end{landscape}
+
+\begin{landscape}
+\subsection*{Bare ground AICc table -- Cummulative link models}
+
+Note: clmm models can't cope with standard nesting notation so \emph{SubplotID} is constructed as a plot-specific subplot random effect.
+
+\begin{tabular}{l|r|r|r|r|r}
+\hline
+Model & K & AICc & Delta\_AICc & AICcWt & LL\\
+\hline
+ Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 15 & 11321.14 & 0.000 & 0.365 & -5645.551\\
+\hline
+ as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 15 & 11321.14 & 0.000 & 0.365 & -5645.551\\
+\hline
+ Year + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 11323.12 & 1.981 & 0.135 & -5645.539\\
+\hline
+ as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 11323.12 & 1.981 & 0.135 & -5645.539\\
+\hline
+ 1 + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 8 & 11945.42 & 624.279 & 0.000 & -5964.705\\
+\hline
+ scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 9 & 11947.40 & 626.261 & 0.000 & -5964.694\\
+\hline
+\end{tabular}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Predicted changes in bare ground cover class.png"}
+     \caption{Predicted changes in bare ground cover class (from top-ranked cummulative link model: \emph{Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}).}
+     \label{fig:simpl.biodiversity}
+     
+\end{figure}
+\end{landscape}
+
+
+
+A hurdle model was used to assess changes in bare ground cover (logistic regression to assess presence-absence followed by a beta binomial regression to determine proportion of bare ground). The presence of bare ground was associated with  year (top ranked model: \emph{as.factor(Year) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.73) with bare ground diminishing over time (from an average of 18.2\% per subplot in 2018 to 2.6\% in 2026).
+
+Modelling suggest that the proportion of bare ground increased with proximity to the fence but was declining over time (top ranked mode: \emph{Year + scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.43). However this beta regression model had multimodal residuals, suggesting the existence of a potential hidden process (i.e. some semi-predictable factor we have not accounted for is driving a pattern in the amount of bare ground we are recording) . Graphing appeared to confirm that bare ground seems to appear in quantised clumps, suggesting that there may be underlying hidden process in play (Figure \ref{fig:multimodel}). While the existence of such a phenomenon is speculative localised disturbance caused by rabbit scrapes would potentially be one explanation.
 
 \end{document}
 

@@ -189,9 +189,7 @@ The predictions from the new top-ranked model suggest that samples found closer 
 
 \subsection*{Bare ground cover}
 
-Analyses of bare ground were conducted as cover classes via cumulative link models ( they were also assessed as approximate proportions (by transforming cover classes into proportions at the subplot level via hurdle models see Appendix).
-
-While other cover classes on the fan appear to be stable it is evident that bare ground appears to be disappearing rehardless of metric (Figure \ref{fig:barecoverclass}, \ref{fig:bare} \& \ref{fig:bgcover}).
+Analyses of bare ground were conducted as cover classes via cumulative link models\footnote{Bareground was also assessed as approximate proportions by transforming cover classes into proportions at the subplot level via hurdle models see Appendix.}). While other cover classes on the fan appear to be stable it is evident that bare ground appeared to be disappearing regardless of metric (Figure \ref{fig:barecoverclass}, \ref{fig:bare} \& \ref{fig:bgcover}). The top-ranked model was \emph{as.factor(Year) + (1 | Plot) + (1 | SubplotID)} (AICc weight = 0.73). The predictions from this model (Appendix Figure \ref{fig:barepred}) closely align with those observed (Figure \ref{fig:barecoverclass}). The second-ranked model replicated the variables first but with the inclusion of distance from fence, and indicated bare ground increased with distance from the fence. The support for the \emph{Year} variable as a factor rather than a continuous variable suggests that  factors determining bare ground coverage is more complicated than a time bound trajectory.
 
 
 \vspace{3mm}
@@ -208,7 +206,7 @@ While other cover classes on the fan appear to be stable it is evident that bare
 \begin{figure}[h]
 \centering
      \includegraphics[width=10cm,keepaspectratio]{"Changes in ground cover.png"}
-     \caption{Bare ground (BG) seems to disappearing from the Pember Fan.}
+     \caption{Bare ground (BG) as a proportion of ground cover appears to disappearing from the Pember Fan along a north-south gradient. Key: BG = bare ground, BR = bare rock, L = litter, Li = lichen, V = vegetation}
      \label{fig:bare}
      
 \end{figure}
@@ -224,11 +222,6 @@ While other cover classes on the fan appear to be stable it is evident that bare
      
 \end{figure}
 \end{landscape}
-
-
-
-
-
 
 
 \subsection*{Floral Species Composition}
@@ -247,8 +240,6 @@ Across the transects there was a trend towards increasing dominance of species w
      \label{fig:TaxonBiostatus}
      
 \end{figure}
-
-
 
 \begin{landscape}
 \begin{figure}[h]
@@ -317,13 +308,11 @@ The three plant species present on the fan with the highest threat classificatio
 As plant cover was estimated using ordered cover class categories. Cumulative link models with random effects were used to estimate 
 
 
-\emph{Brachyscome pinnata} appears to be constrained to the southern portion of the fan and appears to be fast disappearing (Figure \ref{fig:brapin}). Intensive modelling revealed that there was no support for subplot random effects and their inclusion was an impediment for robust modelling (causing numerous diagnostic issues).
-
-Preliminary modelling (top-ranked model \emph{Year + scale(fence.dist) + (1 $\mid$ Plot)}, AICc weight = 0.80), suggests the presence of \emph{Brachyscome pinnata} is declining \mytilde 12\% per year. 
+\emph{Brachyscome pinnata} appears to be constrained to the southern portion of the fan and appears to be fast disappearing (Figure \ref{fig:brapin}). Cuumulative modelling revealed that the top-ranked model with unianmous support was \emph{as.factor(Year) + scale(fence.dist) + (1 | Plot) + (1 | SubplotID} which revealed cover for this species is declining, especially in the last three years and there is a non-significant trend of higher coverage closer to the fence. 
 
 There is no evidence that \emph{Sonchus novae-zelandiae} is declining but rather it's presence maybe associated with a gradient extending from the fence (Figure \ref{fig:sonnov}; top-ranked model \emph{scale(fence.dist) + (1 $\mid$ Plot)}, AICc weight = 0.40). However, the second ranked model was a null model thereby suggesting there is effectively no detectable pattern whatsoever (\emph{1 + (1 $\mid$ Plot)}, AICc weight = 0.33).
 
-\emph{Gingidia enysii} has only been found on two transects (once on in a single subplot on R10 and in five subplots on RR3). Modelling was restricted to RR3 and limited to null model and a year effect. The top-ranked model (\emph{1 + (1|Subplot)}) suggested the presence of \emph{G. enysii} was best explained as a simple average(AIC weight = 0.66), while the second-ranked model (\emph{Year  + (1|Subplot)}  suggested that the probablity of finding the species was declining year on year (AIC weight = 0.34). However, the species when present was found to be proportionally increasing year on year (\emph{Year + (1 | Subplot)}) due to a proliferation at a single subplot (i.e. RR3 Subplot 960).
+
 
 
 \begin{landscape}
@@ -340,12 +329,26 @@ There is no evidence that \emph{Sonchus novae-zelandiae} is declining but rather
 \begin{landscape}
 \begin{figure}[h]
 \centering
+     \includegraphics[width=18cm,keepaspectratio]{"Predicted changes in BRAPIN.png"}
+     \caption{The predicted change in cover class of \emph{Brachyscome pinnata} based in the top 97\textsuperscript{th} percentile of random effects (chosen because most plots have no history of this species being present).}
+     \label{fig:brapin}
+     
+\end{figure}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
      \includegraphics[width=18cm,keepaspectratio]{"Sonchus novae-zelandiae.png"}
      \caption{\emph{Sonchus novae-zelandiae} is only found on the southern portion of the fan but does not appear to be at imminent risk of local extinction.}
      \label{fig:sonnov}
      
 \end{figure}
 \end{landscape}
+
+
+\emph{Gingidia enysii} has only been found on two transects (once on in a single subplot on R10 and in five subplots on RR3). Modelling was restricted to RR3 (hence no plot random effect was included) and limited to null model, a year effect, and a year as factor effect. The top-ranked model (\emph{1 + (1|Subplot)}) suggested the presence of \emph{G. enysii} was best explained as a simple average(AIC weight = 0.68), while the second-ranked model (\emph{Year  + (1|Subplot)}  suggested that the cover class of the species was increasing year on year (AIC weight = 0.26) likely due to a proliferation at a single subplot (RR3 subplot 960).
 
 
 \begin{landscape}
@@ -380,21 +383,24 @@ During the exploratory process I identified that there was meaningful underdispe
 \end{landscape}
 
 \begin{landscape}
+
 \subsection*{Bare ground AICc table -- Cummulative link models}
 
 Note: clmm models can't cope with standard nesting notation so \emph{SubplotID} is constructed as a plot-specific subplot random effect.
 
+\vspace{5mm}
+
 \begin{tabular}{l|r|r|r|r|r}
 \hline
-Model & K & AICc & Delta\_AICc & AICcWt & LL\\
+\textbf{Model} & \textbf{K} & \textbf{AICc} & \textbf{Delta\_AICc} & \textbf{AICc Weight} & \textbf{LL}\\
 \hline
- Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 15 & 11321.14 & 0.000 & 0.365 & -5645.551\\
+ as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 15 & 11321.14 & 0.000 & 0.729 & -5645.551\\
 \hline
- as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 15 & 11321.14 & 0.000 & 0.365 & -5645.551\\
+ as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 11323.12 & 1.981 & 0.271 & -5645.539\\
 \hline
- Year + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 11323.12 & 1.981 & 0.135 & -5645.539\\
+ Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 9 & 11475.22 & 154.080 & 0.000 & -5728.604\\
 \hline
- as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 11323.12 & 1.981 & 0.135 & -5645.539\\
+ Year + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 10 & 11477.20 & 156.060 & 0.000 & -5728.592\\
 \hline
  1 + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 8 & 11945.42 & 624.279 & 0.000 & -5964.705\\
 \hline
@@ -409,16 +415,16 @@ Model & K & AICc & Delta\_AICc & AICcWt & LL\\
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Predicted changes in bare ground cover class.png"}
      \caption{Predicted changes in bare ground cover class (from top-ranked cummulative link model: \emph{Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}).}
-     \label{fig:simpl.biodiversity}
+     \label{fig:barepred}
      
 \end{figure}
 \end{landscape}
 
+\subsection*{Notes on bare-ground hurdle modelling}
 
+A hurdle model was used initially to assess changes in bare ground cover (logistic regression to assess presence-absence followed by a beta binomial regression to determine proportion of bare ground). The presence of bare ground was associated with year (top ranked model: \emph{as.factor (Year) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.73) with bare ground diminishing over time (from an average of 18.2\% per subplot in 2018 to 2.6\% in 2026).
 
-A hurdle model was used to assess changes in bare ground cover (logistic regression to assess presence-absence followed by a beta binomial regression to determine proportion of bare ground). The presence of bare ground was associated with  year (top ranked model: \emph{as.factor(Year) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.73) with bare ground diminishing over time (from an average of 18.2\% per subplot in 2018 to 2.6\% in 2026).
-
-Modelling suggest that the proportion of bare ground increased with proximity to the fence but was declining over time (top ranked mode: \emph{Year + scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.43). However this beta regression model had multimodal residuals, suggesting the existence of a potential hidden process (i.e. some semi-predictable factor we have not accounted for is driving a pattern in the amount of bare ground we are recording) . Graphing appeared to confirm that bare ground seems to appear in quantised clumps, suggesting that there may be underlying hidden process in play (Figure \ref{fig:multimodel}). While the existence of such a phenomenon is speculative localised disturbance caused by rabbit scrapes would potentially be one explanation.
+Modelling suggest that the proportion of bare ground increased with proximity to the fence but was declining over time (top ranked mode: \emph{Year + scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.43). However this beta regression model had multimodal residuals, suggesting the existence of a potential hidden process (likely as an artifact of the proportions being derived from cover classes - as a consequence it was determined that cumulative link models wee more trustworthy.) 
 
 \end{document}
 

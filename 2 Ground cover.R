@@ -72,16 +72,11 @@ ground <- as.data.frame(ground)
 # check unique years
 unique(ground$Year)
 
-
 # check histogram of cover for bare ground
+# this is only presence data (consistent with how cover is recorded)
 
-head(ground)
-unique(ground$GroundCover)
 bg <- ground %>% filter(GroundCover == "BG")
 bg$Cover <- as.numeric(as.character(bg$Cover))
-
-
-
 
 ggplot()+
   theme_bw()+
@@ -101,8 +96,7 @@ ggplot()+
   ylab("Count\n")+
   xlab("\nCover class")
 
-ggsave("Changes in ground coverclass.png", scale = 1.1, height = 6, width =8)
-
+ggsave("Changes in bare ground cover class.png", scale = 1.1, height = 6, width =8)
 
 set.seed(18)
 
@@ -146,7 +140,7 @@ bare.ground <- non.vege %>%
   group_by(Year, Plot, Subplot, GroundCover) %>%
   summarise(Prop = sum(Proportion, na.rm = TRUE))
 
-
+# insert missing values
 bare.ground.wide <- bare.ground %>% 
   pivot_wider(names_from = GroundCover,
               values_from = Prop,
@@ -339,33 +333,61 @@ ggplot()+
 
 # cumulative link models
 
-# tidy data and join
-bg$Year <- bg$Year - 2019 
+# tidy data and join (no duplicates present)
+bg$Year <- bg$Year - 2018
+
 bg$moniker <- paste(bg$Year, bg$Plot, bg$Subplot)
+
 bg$Year <- NULL
 bg$Plot <- NULL
 bg$Subplot <- NULL
 
 key <- final.bare.wide[, c("Year", "Plot", "Subplot", "fence.dist")]
 key$moniker <- paste(key$Year, key$Plot, key$Subplot)
+key <- as.data.frame(key)
+
+# length(unique(key$moniker))
+# table(duplicated(key$moniker))
 
 
 
 # bare ground cover
+str(key)
+str(bg)
+
+unique(bg$Cover)
 
 bgc <- left_join(key, bg, by = "moniker")
+
+length(unique(bgc$moniker))
+table(duplicated(bgc$moniker))
+
+# ensure 0 is inserted as a cover class
 bgc$Cover <- ifelse(is.na(bgc$Cover), 0, bgc$Cover)
 bgc$Cover <- factor(bgc$Cover, 
                     levels = c("0", "1", "2", "3", "4", "5", "6"),
                     ordered = TRUE)
 
-levels(bgc$Cover)
 
+table(bgc$Cover )
+
+# find duplicated moniler value
+
+bgc$moniker[duplicated(bgc$moniker)]
+dup <- bgc %>% filter(moniker == "1 CA9 240")
+
+# insure duplicates are removed
+bgc <- bgc %>%
+  distinct(moniker, .keep_all = TRUE)
+
+
+# make suplot id because glmm can't handle it otherwise
 bgc$SubplotID <- interaction(
   bgc$Plot,
   bgc$Subplot,
   drop = TRUE
 )
+
 
 
 clmm.mod <- list()
@@ -374,11 +396,11 @@ clmm.mod[[1]] <- clmm(Cover ~ 1 + (1|Plot) + (1 | SubplotID), data = bgc)
 clmm.mod[[2]] <- clmm(Cover ~ Year  + (1|Plot) + (1 | SubplotID), data = bgc)
 clmm.mod[[3]] <- clmm(Cover ~ scale(fence.dist) + (1|Plot) + (1 | SubplotID), data = bgc)
 clmm.mod[[4]] <- clmm(Cover ~ Year + scale(fence.dist) + (1|Plot) + (1 | SubplotID), data = bgc)
-# clmm.mod[[5]] <- clmm(Cover ~ as.factor(Year) + scale(fence.dist) + (1|Plot) + (1 | Subplot),  data = bgc)
-# clmm.mod[[6]] <- clmm(Cover ~ as.factor(Year) + (1|Plot) + (1 | Subplot), data = bgc)
+clmm.mod[[5]] <- clmm(Cover ~ as.factor(Year) + (1|Plot) + (1 | SubplotID), data = bgc)
+clmm.mod[[6]] <- clmm(Cover ~ as.factor(Year) + scale(fence.dist) + (1|Plot) + (1 | SubplotID),  data = bgc)
 
 # temporal auto correlation - cant really cope with a 
-# Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ as.factor(Year) + ar1(as.factor(Year) + 0 | Plot/Subplot) + (1|Plot/Subplot), 
+#  Cand.models.hurd[[7]] <- glmmTMB(hurdle ~ as.factor(Year) + ar1(as.factor(Year) + 0 | Plot/Subplot) + (1|Plot/Subplot), 
 #                                  family = "binomial", 
 #                                   data = all)
 
@@ -389,22 +411,30 @@ Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1",
                       unlist(lapply(clmm.mod, formula))))
 
 # AIC table to 4 digits
-clmm.aic <- aictab(cand.set = clmm.mod, modnames = Modnames, sort = TRUE)
+clmm.aic <- aictab(cand.set = clmm.mod, modnames = Modnames, sort = TRUE) %>% 
+  as.data.frame()
+
+clmm.aic <- clmm.aic %>% dplyr::select(-ModelLik, -Cum.Wt)
+clmm.aic[, 3:6] <- round(clmm.aic[, 3:6],3)
 clmm.aic
 
+library(kableExtra)
+
+kable(clmm.aic, "latex")
+
 # summary
-summary(clmm.mod[[2]])
+summary(clmm.mod[[4]])
 
 # checks - Plot random effect are supported
-ranef(clmm.mod[[2]])
+ranef(clmm.mod[[5]])
 
 # makes two columns for each random effect
-my.ranef <- ranef(clmm.mod[[2]]) %>% as.data.frame()
+my.ranef <- ranef(clmm.mod[[5]]) %>% as.data.frame()
 my.ranef$total.random <- rowSums(my.ranef)
 
 
-# get betas
-my.year <- clmm.mod[[2]]$beta
+
+
 plot.subplot <- quantile(my.ranef$total.random, 0.95)
 
 store <- NULL
@@ -412,14 +442,17 @@ store <- NULL
 my.year <- 0:7
 
 for(i in 1:8){
+  
+  # get betas
+  my.year <- c(0, clmm.mod[[5]]$beta)
 
   
-C0 <- plogis(2.2836  - ( -0.33210 * my.year[i] + plot.subplot))
-C1 <- plogis(3.2312 - ( -0.33210 * my.year[i] + plot.subplot))
-C2 <- plogis(4.1715 - ( -0.33210 * my.year[i] + plot.subplot))
-C3 <- plogis(5.9794  - ( -0.33210 * my.year[i] + plot.subplot))
-C4 <- plogis(8.1624 - ( -0.33210 * my.year[i] + plot.subplot))
-C5 <- plogis(10.2834 - ( -0.33210 * my.year[i] + plot.subplot))
+C0 <- plogis(1.4988 - ( my.year[i] + plot.subplot))
+C1 <- plogis(2.4018 - ( my.year[i] + plot.subplot))
+C2 <- plogis(3.3364 - ( my.year[i] + plot.subplot))
+C3 <- plogis(5.1509 - ( my.year[i] + plot.subplot))
+C4 <- plogis(7.2198 - ( my.year[i] + plot.subplot))
+C5 <- plogis(9.9134 - ( my.year[i] + plot.subplot))
 
 
 store[[i]] <- data.frame(cover.0 = round(C0 - 0, 3),
@@ -443,7 +476,31 @@ my.long <- my.predictions  |>
 # filter out cover class 0
 my.long <-  my.long  |> filter(Cover != "cover.0")
 
+my.long <- my.long %>% 
+  mutate(Cover = str_replace_all(Cover, "cover.", ""))
+my.long$Cover <- as.numeric(as.character(my.long$Cover))
+
+str(my.long$Cover)
+
 ggplot()+
-  geom_col(data = my.long, aes( x= Cover, y= Proportion))+
-  facet_grid(.~Year)
+  theme_bw()+
+  geom_col(data = my.long, aes( x= Cover, y= Proportion),
+           fill = "orange", colour = "white") +
+  facet_grid(~Year) +
+  theme(axis.title = element_text(
+    size = 14,
+    colour = "grey40"
+  )) + theme(axis.title = element_text(
+  size = 14,
+  colour = "grey40")) +
+  theme(strip.text = element_text(
+    size = 12,
+    colour = "grey40"
+  ))+
+  theme(panel.grid = element_blank())+
+  ylab("Percentage in class \n(excluding absences)\n")+
+  xlab("\nCover class")
+
+ggsave("Predicted changes in bare ground cover class.png", scale = 1.1, height = 6, width =8)
+
 

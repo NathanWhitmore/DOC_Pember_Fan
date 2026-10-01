@@ -24,7 +24,7 @@ pember$Year <- as.numeric(pember$Year) - 2018
 # simplify
 cover <- cover[, c("Year", "Plot", "Subplot", "BG", "fence.dist", "Transect")]
 pember <- pember[, c("Year", "Plot", "Subplot","NVSSpeciesName",
-                     "TaxonBioStatus", "TaxonGrowthForm", "Indigenous", "Proportion")]
+                     "TaxonBioStatus", "TaxonGrowthForm", "Indigenous", "Cover", "Proportion")]
 
 # moniker
 cover$moniker <- paste(cover$Year, cover$Plot, cover$Subplot)
@@ -42,46 +42,39 @@ cover <- as.data.frame(cover)
 sort(unique(pember$NVSSpeciesName))
 
 # species
-# my.species <- "Brachyscome pinnata"
-# 
-# my.species <- "Sonchus novae-zelandiae"
-
 my.species <- "Gingidia enysii"
 
+
+# do this as a precrusor to ensure all plots are represented
 pember$key.species <- ifelse(pember$NVSSpeciesName == my.species,
                              pember$Proportion, 
                              0 )
 
 # pember$not.key.species <- 1 - pember$key.species 
 
+# correct pember levels
+
+pember$Cover <- factor(pember$Cover, 
+                    levels = c("0", "P", "1", "2", "3", "4", "5", "6"),
+                    ordered = TRUE)
+
+
+
 # simplify
 critical <- pember %>%
   group_by(Year, Plot, Subplot, moniker) %>%
   summarise(Species.prop = sum(key.species))
 
+# filter for species
+cover <- pember %>% filter(NVSSpeciesName == my.species)
+
 # spatial join
 all <- left_join(critical, cover, by = "moniker")
-head(all)
 
-# only keep presence data
+# check keep presence data
 presences <- all %>% filter(Species.prop != 0)
-head(presences)
+presences
 
-# correct for bare ground
-presences$correct.prop <- (1 - presences$BG) * presences$Species.prop
-
-# make spatial
-presences.sf <- st_as_sf(presences)
-
-# start with presence of bare ground
-all$correct.prop <- (1 - all$BG) * all$Species.prop
-all$hurdle <- ifelse(all$correct.prop == 0, 0, 1)
-all$hurdle <- ifelse(is.na(all$correct.prop), 0, all$hurdle)
-
-# add X-Y coordinates
-all<- all %>% st_as_sf()
-all.coord <- st_coordinates(all)
-all <- cbind(all, all.coord )
 
 # check total should be 12000
 nrow(all)

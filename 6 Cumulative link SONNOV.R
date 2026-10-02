@@ -7,6 +7,7 @@ library(arm)
 library(sf)
 library(performance)
 library(ordinal)
+library(kableExtra)
 
 # load modified data frames
 pember <- readRDS("Pember.rds")
@@ -157,6 +158,9 @@ clmm.aic <- clmm.aic %>% dplyr::select(-ModelLik, -Cum.Wt)
 clmm.aic[, 3:6] <- round(clmm.aic[, 3:6],3)
 clmm.aic
 
+# latex table
+kable(clmm.aic, "latex")
+
 # manual predictions
 # summary
 summary(clmm.mod[[2]])
@@ -178,7 +182,7 @@ my.ranef <- ranef(clmm.mod[[2]]) %>% as.data.frame()
 my.ranef$total.random <- rowSums(my.ranef)
 
 # choose subplots where the species is likely to be found
-plot.subplot <- quantile(my.ranef$total.random, 0.97)
+plot.subplot <- quantile(my.ranef$total.random, 0.995)
 
 
 # prediction loop

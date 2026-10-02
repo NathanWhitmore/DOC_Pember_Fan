@@ -40,9 +40,12 @@ cover <- as.data.frame(cover)
 sort(unique(pember$NVSSpeciesName))
 
 # species
-my.species <- "Brachyscome pinnata"
 
+my.species <- "Gingidia enysii"
+
+# my.species <- "Brachyscome pinnata"
 # my.species <- "Sonchus novae-zelandiae"
+
 pember$key.species <- ifelse(pember$NVSSpeciesName == my.species,
                              pember$Proportion, 
                              0 )
@@ -114,7 +117,7 @@ ggplot()+
   geom_sf(data = presences.sf  , 
           aes(size = correct.prop), 
           alpha = 0.7,
-          colour = "forestgreen")+
+          colour = "brown")+
   facet_wrap(~Year)+
   theme(panel.grid = element_blank())+
   theme(axis.ticks = element_blank())+
@@ -124,7 +127,10 @@ ggplot()+
   labs(size = "Corrected proportion")+
   theme(plot.title = element_text(face = "italic"))
 
-ggsave("Brachyscome pinnata.png", scale =1.1, height = 6, width =8)
+
+ggsave("Gingidia enysii.png", scale =1.1, height = 6, width =8)
+
+# ggsave("Brachyscome pinnata.png", scale =1.1, height = 6, width =8)
 # ggsave("Sonchus novae-zelandiae.png", scale =1.1, height = 6, width =8)
 
 

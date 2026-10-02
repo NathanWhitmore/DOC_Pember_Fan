@@ -89,15 +89,12 @@ all <- all %>% filter(Plot %in% c("RR3", "RR10"))
 # map
 ggplot()+
   theme_bw()+
- # geom_sf(data = all %>%
- #           filter(Y< 5225800), 
- #         shape = 3, size = 9, colour = "red")+
   geom_sf(data = cover.sf, 
           shape = 1)+
   geom_sf(data = presences.sf  , 
           aes(size = correct.prop), 
           alpha = 0.7,
-          colour = "forestgreen")+
+          colour = "skyblue")+
   facet_wrap(~Year)+
   theme(panel.grid = element_blank())+
   theme(axis.ticks = element_blank())+

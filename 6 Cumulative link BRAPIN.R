@@ -7,6 +7,7 @@ library(arm)
 library(sf)
 library(performance)
 library(ordinal)
+library(kableExtra)
 
 # load modified data frames
 pember <- readRDS("Pember.rds")
@@ -16,7 +17,7 @@ cover <- cover.sf
 # quick check
 # pember %>% filter(NVSSpeciesName == "Raoulia monroi") # absent 
 
-# standardise pembr year
+# standardise pember year
 pember$Year <- as.numeric(pember$Year) - 2018
 
 # simplify
@@ -156,6 +157,10 @@ clmm.aic <- aictab(cand.set = clmm.mod, modnames = Modnames, sort = TRUE) %>%
 clmm.aic <- clmm.aic %>% dplyr::select(-ModelLik, -Cum.Wt)
 clmm.aic[, 3:6] <- round(clmm.aic[, 3:6],3)
 clmm.aic
+
+# kable
+kable(clmm.aic, "latex")
+
 
 # manual predictions
 # summary

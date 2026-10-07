@@ -307,7 +307,8 @@ ggplot()+
   theme(axis.title = element_blank())+
   theme(axis.text = element_blank())+
   scale_colour_manual(values =c("purple", "forestgreen"))+
-  labs(colour = "Cover proportion")
+  labs(size = "Corrected proportion",
+       colour = "Transect type")
 
 ggsave("Cover proportion.png", scale =1.1, height =6, width =8)
 

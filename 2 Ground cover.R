@@ -31,7 +31,7 @@ ground <- ground %>%
     )
   )
 
-# translate values to means incase spatial graphing
+# translate values to means for spatial graphing
 L1 <- mean(0:1)  / 100 # 1
 L2 <- mean(1:5) / 100 # 2
 L3 <- mean(6:25)  / 100 # 3

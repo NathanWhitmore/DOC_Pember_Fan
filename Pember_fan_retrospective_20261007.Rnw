@@ -107,7 +107,9 @@
 
 The Pember Fan is an alluvial outwash surface in Lees Valley, North Canterbury, formed from gravels deposited where the Ashley/Rakahuri River emerges into the valley \citep{newell}. Much of the area is classified as a 'threatened land environment’. The fan supports a grassland which includes several nationally threatened and at-risk plants, most notably the nationally critical Lees Valley daisy (\emph{Brachyscome pinnata}), whose only known natural population occurs there and whose seeds, unlike most members of the Asteraceae family, are not wind dispersed \citep{newell}. Other threatened species known to inhabit the fan include \emph{Gingidia enysii}, \emph{Sonchus novae-zelandiae} and \emph{Raoulia monroi}\footnote{Not present in the transect data}.
 
-In 2018 the Department of Conservation established a monitoring programme based on 30 transects\footnote{Called Plots in the parent data set.} (each with 50 subplots) to monitor vegetative changes in this ecosystem through time \citep{newell}. The underlying purpose of this monitoring programme was to inform management. Key metrics focused on changes in:
+In 2018 the Department of Conservation established a monitoring programme based on 30 transects\footnote{Called Plots in the parent data set.} (each with 50 subplots) to monitor vegetative changes in this ecosystem through time \citep{newell}. The intended purpose of the monitoring was to assess changes in the site’s conservation values, particularly threatened native species such as \emph{Brachyscome pinnata}, and to inform ongoing management. The monitoring on changes in native and exotic vegetation, to allow informed and ongoing decisions about the frequency and intensity of light sheep grazing (in order to promote native species diversity and conservation), and weed surveillance.
+
+Key metrics focused on changes in:
 
 \begin{itemize}
   \item Indigenous biodiversity
@@ -116,6 +118,9 @@ In 2018 the Department of Conservation established a monitoring programme based 
 \end{itemize}
 
 The 30 transects which make up the monitoring programme consist of two types: (1)  ten closely spaced transects restricted to a recreational reserve, and (2) twenty more widely spaced transects found across a planned conservation covenant.
+
+Importantly, as quantitative data on the grazing intensity has not been kept and there has been a switch from sheep grazing to cattle this metric cannot be analytically investigated.
+
 
 \section*{Purpose of current analysis}
 
@@ -157,25 +162,6 @@ Plotting the random errors associated with the top-ranked model suggested a spat
 The predictions from the new top-ranked model (\emph{Year * scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.63) suggested that samples found closer to the fence line have higher indigenous biodiversity but are more likely to lose indigenous species at a faster rate than those located further away (Figure \ref{fig:distance.fence}).
 
 
-\begin{landscape}
-\begin{figure}[h]
-\centering
-     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect spatial signal.png"}
-     \caption{The uncorrected distribution of random errors exhibiting an apparent gradient from fence line to river.}
-     \label{fig:spatial.signal}
-     
-\end{figure}
-\end{landscape}
-
-\begin{landscape}
-\begin{figure}[h]
-\centering
-     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect fence spatial.png"}
-     \caption{Incorporation of distance from fence line diminished unexplained random effects.}
-     \label{fig:signal.corrected}
-     
-\end{figure}
-\end{landscape}
 
 \begin{landscape}
 \begin{figure}[h]
@@ -189,7 +175,7 @@ The predictions from the new top-ranked model (\emph{Year * scale(fence.dist) + 
 
 \subsection*{Bare ground cover}
 
-Analyses of bare ground were conducted as cover classes via cumulative link mixed-effect models (which account for the non-independence of the subplots). Bare ground was also assessed as approximate proportions by transforming cover classes into proportions at the subplot level. While other cover classes on the fan appear to be stable, it is evident that bare ground appears to be disappearing regardless of metric (Figure \ref{fig:barecoverclass}, \ref{fig:bare}, \& \ref{fig:bgcover}). The top-ranked model was \emph{as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)} (AICc weight = 0.73). The predictions from this model (Appendix Figure \ref{fig:barepred}) closely align with those observed (Figure \ref{fig:barecoverclass}). The second-ranked model replicated the variables of the first but with the inclusion of distance from fence, and indicated bare ground increased with distance from the fence. The stronger support for \emph{Year} as a factor rather than as a continuous variable suggests that bare ground cover varies year-to-year in a more idiosyncratic manner rather than simply a linear trend over time.
+Analyses of bare ground were conducted as cover classes via cumulative link mixed-effect models (which account for the non-independence of the subplots). Bare ground was also assessed as approximate proportions by transforming cover classes into proportions at the subplot level. While other cover classes on the fan appear to be stable, it is evident that bare ground appears to be disappearing regardless of metric (Figure \ref{fig:barecoverclass}, \ref{fig:bare}, \& \ref{fig:bgcover}). The top-ranked model was \emph{as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)} (AICc weight = 0.57). The predictions from this model (Appendix Figure \ref{fig:barepred}) closely align with those observed (Figure \ref{fig:barecoverclass}). The second-ranked model replicated the variables of the first but with the inclusion of distance from fence, and indicated bare ground increased with distance from the fence (AICc weight = 0.43). The stronger support for \emph{Year} as a factor rather than as a continuous variable suggests that bare ground cover varies year-to-year in a more idiosyncratic manner rather than simply a linear trend over time.
 
 
 \vspace{3mm}
@@ -404,17 +390,18 @@ Note: CLMM models can't cope with standard nesting notation so \emph{SubplotID} 
 \hline
 \textbf{Model} & \textbf{K} & \textbf{AICc} & \textbf{Delta\_AICc} & \textbf{AICc Weight} & \textbf{LL}\\
 \hline
- as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 15 & 11321.14 & 0.000 & 0.729 & -5645.551\\
 \hline
- as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 11323.12 & 1.981 & 0.271 & -5645.539\\
+as.factor(Year) + (1 | Plot) + (1 | SubplotID) & 15 & 11322.54 & 0.000 & 0.572 & -5646.251\\
 \hline
- Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 9 & 11475.22 & 154.080 & 0.000 & -5728.604\\
+as.factor(Year) + scale(fence.dist) + (1 | Plot) + (1 | SubplotID) & 16 & 11323.12 & 0.581 & 0.428 & -5645.539\\
 \hline
- Year + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 10 & 11477.20 & 156.060 & 0.000 & -5728.592\\
+Year + (1 | Plot) + (1 | SubplotID) & 9 & 11476.96 & 154.418 & 0.000 & -5729.473\\
 \hline
- 1 + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 8 & 11945.42 & 624.279 & 0.000 & -5964.705\\
+Year + scale(fence.dist) + (1 | Plot) + (1 | SubplotID) & 10 & 11477.20 & 154.660 & 0.000 & -5728.592\\
 \hline
- scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 9 & 11947.40 & 626.261 & 0.000 & -5964.694\\
+ 1 + (1 | Plot) + (1 | SubplotID) & 8 & 11946.61 & 624.064 & 0.000 & -5965.297\\
+\hline
+ scale(fence.dist) + (1 | Plot) + (1 | SubplotID) & 9 & 11947.40 & 624.861 & 0.000 & -5964.694\\
 \hline
 \end{tabular}
 \end{landscape}
@@ -543,6 +530,27 @@ During the exploratory process I identified that there was meaningful underdispe
      \includegraphics[width=18cm,keepaspectratio]{"Biodiversity plot modelled and correlation.png"}
      \caption{The predicted plot-level diversity changes through time. Four plots are plotted for reference.}
      \label{fig:simpl.biodiversity}
+     
+\end{figure}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect spatial signal.png"}
+     \caption{The uncorrected distribution of random errors exhibiting an apparent gradient from fence line to river.}
+     \label{fig:spatial.signal}
+     
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect fence spatial.png"}
+     \caption{Incorporation of distance from fence line diminished unexplained random effects.}
+     \label{fig:signal.corrected}
      
 \end{figure}
 \end{landscape}

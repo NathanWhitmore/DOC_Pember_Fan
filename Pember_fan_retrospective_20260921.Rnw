@@ -81,7 +81,7 @@
 
 
 \noindent \textsf{nathan@reproducible.co.nz}\\
-\noindent \textsf{21 September 2026}
+\noindent \textsf{7 October 2026}
 
 \end{flushright}
 
@@ -97,11 +97,7 @@
 
 \begin{shaded}
 
-\section*{Summary} A retrospective analysis of the Pember Fan monitoring data indicates that the species composition of the fan is changing. Grasses (both exotic and indigenous) are increasing in areal coverage while forbs are diminishing. At the same time the amount of bare ground is shrinking. There are also indications the fan is becoming more depauperate over time, with indigenous biodiversity increasing with perpendicular distance from the westward fenceline. \emph{Brachyscome pinnata} (Nationally Critical), an indigenous forb restricted to the southern half of the fan, is disappearing quickly, and global extinction appears imminent if its current trajectory continues.  
-
-Currently, there is a proposal to increase stock grazing to increase the rate of browsing to prevent \emph{Brachyscome pinnata} from being usurped by grasses. Given the current management constraints (discussed during a video meeting) an experimental grazing approach  was considered impractical. However, it was identified that localised experimental plots could also be established on the fan, outside existing transects, to test vegetation control (e.g. mowing) around known \emph{Brachyscome pinnata} plants, providing replicated, randomly assigned treatments and causal evidence to inform management (without disrupting farm activities). This is likely the direction of the next phase of analytical work.
-
-As evidenced by this retrospective analysis, the current monitoring regime has proven entirely adequate for assessing community and population trajectories on the Pember Fan and for this reason should be continued without change. 
+\section*{Summary} A retrospective analysis of the Pember Fan monitoring data indicates that the species composition of the fan is changing. Grasses (both exotic and indigenous) are increasing in areal coverage while forbs are diminishing. At the same time the amount of bare ground is shrinking. There are also indications the fan is becoming more depauperate over time, with indigenous biodiversity increasing with perpendicular distance from the westward fenceline. \emph{Brachyscome pinnata} (Nationally Critical), an indigenous forb restricted to the southern half of the fan, is disappearing quickly, and global extinction appears imminent if its current trajectory continues.  As evidenced by this retrospective analysis, the current monitoring regime has proven sufficient for detecting changes in  community composition and areal coverage of the species of primary concern.  
 
 
 \end{shaded}
@@ -111,7 +107,9 @@ As evidenced by this retrospective analysis, the current monitoring regime has p
 
 The Pember Fan is an alluvial outwash surface in Lees Valley, North Canterbury, formed from gravels deposited where the Ashley/Rakahuri River emerges into the valley \citep{newell}. Much of the area is classified as a 'threatened land environment’. The fan supports a grassland which includes several nationally threatened and at-risk plants, most notably the nationally critical Lees Valley daisy (\emph{Brachyscome pinnata}), whose only known natural population occurs there and whose seeds, unlike most members of the Asteraceae family, are not wind dispersed \citep{newell}. Other threatened species known to inhabit the fan include \emph{Gingidia enysii}, \emph{Sonchus novae-zelandiae} and \emph{Raoulia monroi}\footnote{Not present in the transect data}.
 
-In 2018 the Department of Conservation established a monitoring programme based on 30 plots (each with 50 subplots) to monitor vegetative changes in this ecosystem through time \citep{newell}. The underlying purpose of this monitoring programme was to inform management. Key metrics focused on changes in:
+In 2018 the Department of Conservation established a monitoring programme based on 30 plots (each with 50 subplots) to monitor vegetative changes in this ecosystem through time \citep{newell}. The intended purpose of the monitoring was to assess changes in the site’s conservation values, particularly threatened native species such as \emph{Brachyscome pinnata}, and to inform ongoing management. The monitoring on changes in native and exotic vegetation, to allow informed and ongoing decisions about the frequency and intensity of light sheep grazing (in order to promote native species diversity and conservation), and weed surveillance.
+
+Key metrics focused on changes in:
 
 \begin{itemize}
   \item Indigenous biodiversity
@@ -120,6 +118,9 @@ In 2018 the Department of Conservation established a monitoring programme based 
 \end{itemize}
 
 The 30 transects which make up the monitoring programme consist of two types: (1)  ten closely spaced transects restricted to a recreational reserve, and (2) twenty more widely spaced transects found across a planned conservation covenant.
+
+Importantly, as quantitative data on the grazing intensity has not been kept and there has been a switch from sheep grazing to cattle this metric cannot be analytically investigated.
+
 
 \section*{Purpose of current analysis}
 
@@ -161,25 +162,6 @@ Plotting the random errors associated with the top-ranked model suggested a spat
 The predictions from the new top-ranked model (\emph{Year * scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.63) suggested that samples found closer to the fence line have higher indigenous biodiversity but are more likely to lose indigenous species at a faster rate than those located further away (Figure \ref{fig:distance.fence}).
 
 
-\begin{landscape}
-\begin{figure}[h]
-\centering
-     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect spatial signal.png"}
-     \caption{The uncorrected distribution of random errors exhibiting an apparent gradient from fence line to river.}
-     \label{fig:spatial.signal}
-     
-\end{figure}
-\end{landscape}
-
-\begin{landscape}
-\begin{figure}[h]
-\centering
-     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect fence spatial.png"}
-     \caption{Incorporation of distance from fence line diminished unexplained random effects.}
-     \label{fig:signal.corrected}
-     
-\end{figure}
-\end{landscape}
 
 \begin{landscape}
 \begin{figure}[h]
@@ -547,6 +529,27 @@ During the exploratory process I identified that there was meaningful underdispe
      \includegraphics[width=18cm,keepaspectratio]{"Biodiversity plot modelled and correlation.png"}
      \caption{The predicted plot-level diversity changes through time. Four plots are plotted for reference.}
      \label{fig:simpl.biodiversity}
+     
+\end{figure}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect spatial signal.png"}
+     \caption{The uncorrected distribution of random errors exhibiting an apparent gradient from fence line to river.}
+     \label{fig:spatial.signal}
+     
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Pember Fan random effect fence spatial.png"}
+     \caption{Incorporation of distance from fence line diminished unexplained random effects.}
+     \label{fig:signal.corrected}
      
 \end{figure}
 \end{landscape}

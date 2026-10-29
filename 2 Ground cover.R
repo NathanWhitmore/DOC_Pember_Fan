@@ -115,7 +115,7 @@ ggplot()+
     size = 12,
     colour = "grey40"
   )) +
-  ylab("Proportion\n")+
+  ylab("Approximate proportion\n")+
   xlab("\nMonitoring year")+
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5, hjust = 0.5))
 
@@ -197,9 +197,14 @@ ggplot()+
   theme(axis.ticks = element_blank())+
   theme(axis.title = element_blank())+
   theme(axis.text = element_blank())+
-  scale_colour_manual(values =c("purple", "forestgreen"))+
-  labs(size = "Corrected proportion",
+  scale_colour_manual(
+    values = c("purple", "forestgreen"),
+    guide = guide_legend(
+      override.aes = list(size = 5, alpha = 1)
+    ))+
+  labs(size = "Approximate ground cover proportion",
        colour = "Transect type")
+
 
 ggsave("Cover proportion.png", scale =1.1, height =6, width =8)
 
@@ -316,8 +321,6 @@ ranef(clmm.mod[[5]])
 # makes two columns for each random effect
 my.ranef <- ranef(clmm.mod[[5]]) %>% as.data.frame()
 my.ranef$total.random <- rowSums(my.ranef)
-
-
 
 
 plot.subplot <- quantile(my.ranef$total.random, 0.95)

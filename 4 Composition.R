@@ -56,7 +56,7 @@ ggplot()+
   theme_bw()+
   geom_col(data = df, aes(x = as.factor(Year), y = Presence, fill = GrowthBio), 
            position = "fill")+
-  ylab("Proportion\n")+
+  ylab("Proportion of records\n")+
   xlab("\nMonitoring year")+
   facet_wrap(~Transect)
 
@@ -67,7 +67,7 @@ ggplot()+
   theme_bw()+
   geom_col(data = df, aes(x = as.factor(Year), y = Presence, fill = GrowthBio), 
            position = "fill")+
-  ylab("Proportion\n")+
+  ylab("Proportion of records\n")+
   xlab("\nMonitoring year")+
   facet_grid(Transect~Indigenous)
 
@@ -96,7 +96,7 @@ my.plot <- ggplot()+
   geom_col(data = sum.all, aes(x = Year, y = Total, 
                                fill = TaxonGrowthForm), 
            position = "fill")+
-  ylab("Proportion\n")+
+  ylab("Proportion of records\n")+
   xlab("\nMonitoring year")+
   facet_grid(Transect~Indigenous)+
   theme(legend.position = "none")
@@ -119,7 +119,7 @@ my.grass <- ggplot()+
   geom_col(data = grass.all, aes(x = Year, y = Total, 
                                fill = NVSSpeciesName), 
            position = "fill")+
-  ylab("Proportion\n")+
+  ylab("Proportion of records\n")+
   xlab("\nMonitoring year")+
   facet_grid(.~Transect)+
   theme(legend.position = "none")+
@@ -168,7 +168,7 @@ my.forbs <- ggplot()+
   geom_col(data = forbs.all, aes(x = Year, y = Total, 
                                  fill = NVSSpeciesName), 
            position = "fill")+
-  ylab("Proportion\n")+
+  ylab("Proportion of records\n")+
   xlab("\nMonitoring year")+
   facet_grid(.~Transect)+
   theme(legend.position = "none")+
@@ -196,7 +196,7 @@ ggplot()+
   geom_col(data = forbs.all.top8, aes(x = Year, y = Total, 
                                       fill = Species), 
            position = "fill")+
-  ylab("Proportion\n")+
+  ylab("Proportion of records\n")+
   xlab("\nMonitoring year")+
   facet_grid(.~Transect)
 

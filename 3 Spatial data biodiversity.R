@@ -7,8 +7,12 @@ library(glmmTMB)
 library(spdep)
 library(kableExtra)
 
+# load data
 convenant <- st_read("Lees_Valley_Convenant_Transects_20191220.gpx")
 reserve <-st_read("Lees_Valley_Rec_Reserve_transects_20191220.~dbf.gpx")
+
+# load biodiversity data
+no.species.wide <- readRDS("no.species.wide.rds")
 
 ggplot()+
   theme_void()+
@@ -32,7 +36,6 @@ ggsave("Pember fan layout.png", scale = 1.3, height =7, width =7,
        bg = "white")
 
 # combine all data
-
 my.spatial <- rbind(convenant,reserve)
 my.spatial <- my.spatial  %>% st_transform(crs = 2193)
 
@@ -44,12 +47,14 @@ my.coord  <- my.coord  |>
   mutate(pos = numFactor(X, Y), spatial_group = factor(1))
 
 my.data <- left_join(no.species.wide, my.coord, by = "Plot") %>% as.data.frame()
-str(my.data )
 
+# check that there is no missing data
+table(my.data$Plot)
+
+# Spatial exponential covariance model fails to fit properly
 # m.test1 <- glmmTMB( Indigenous ~ Year * Exotic + (1 | Plot/Subplot) + exp(pos + 0 | spatial_group),
 #                    family = genpois(),
-#                    data = my.data
-#)
+#                    data = my.data)
 
 
 # checking spatial distribution of random effects
@@ -93,7 +98,7 @@ nb <- dnearneigh(
 # summary of nearest neighbour
 summary(nb)
 
-# spatial wieghts for Moran test
+# spatial weights for Moran test
 lw <- nb2listw(nb, style = "W", zero.policy = TRUE)
 
 # significant
@@ -104,6 +109,8 @@ moran.test(
 )
 
 # is this significant across different number of neighbours?
+# here I am looking for spatial autocorrelation 
+# which might be  strongest at local scales
 
 for(k in 2:6) {
   
@@ -164,7 +171,7 @@ ggplot()+
   annotation_north_arrow(location = "bl",
                          pad_x = unit(0.1, "cm"),
                          pad_y = unit(1, "cm"))+
-  ggtitle("Pember fan: random effects for biodiversity appear spatially autocorrelated")+
+ # ggtitle("Pember fan: random effects for biodiversity appear spatially autocorrelated")+
   theme(plot.title = element_text(size = 16, face =2, colour = "grey"))+
   labs(fill = "Random effect size", 
        shape = "Plot type",
@@ -172,6 +179,38 @@ ggplot()+
 
 ggsave("Pember fan random effect spatial signal.png",  
        scale = 1.2, width =9, height = 6,
+       bg = "white")
+
+
+# layout graph for report
+set.seed(2346)
+
+ggplot()+
+  theme_void()+
+  geom_sf(data = river.lines.cropped)+
+  geom_sf(data = river.polygons.cropped)+
+  geom_sf(data = convenant, shape = 21, fill = "forestgreen", colour = "white", size = 3 )+
+  geom_sf(data = reserve, shape = 21, fill = "hotpink", colour = "white", size  = 3)+
+  geom_sf_text(data = convenant, aes(label = name), vjust = 2)+
+  geom_sf(data = fence, colour = "red")+
+  geom_text_repel(
+    data = reserve,
+    aes(label = name, geometry = geometry),
+    stat = "sf_coordinates", 
+    point.padding = 0.8,
+    box.padding = 0.5,
+    force = 2,
+    max.overlaps = Inf, 
+    colour = "grey40"
+  )+
+  annotation_scale(location = "bl")+
+  annotation_north_arrow(location = "bl",
+                         pad_x = unit(0.1, "cm"),
+                         pad_y = unit(1, "cm"))+
+  theme(plot.title = element_text(size = 16, face =2, colour = "grey"))
+
+
+ggsave("Pember fan layout.png", scale = 1.3, height =7, width =7,
        bg = "white")
 
 
@@ -229,7 +268,7 @@ kable(my.aic, "latex")
 summary(Models[[7]])
 
 # fitted
-my.data$fitted <- fitted(Models[[10]])
+my.data$fitted <- fitted(Models[[7]])
 
 ggplot()+ 
   geom_violin(data = my.data, aes(y = Indigenous, x = as.factor(round(fitted ))))+
@@ -244,6 +283,7 @@ com <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = compoi
 res <- simulateResiduals(Models[[7]])
 plot(res)
 res.gen <- simulateResiduals(gen)
+plot(res.gen)
 res.com <- simulateResiduals(com)
 plot(res.com)
 
@@ -258,8 +298,8 @@ testUniformity(res.gen)
 testUniformity(res.com)
 
 # are subplot random effects warranted
-rand.without <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot), family = genpois(), data = my.data, REML = TRUE)
-rand.with <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data, REML = TRUE)
+rand.without <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = genpois(), data = my.data, REML = TRUE)
+rand.with <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data, REML = TRUE)
 
 # subplots are totally justified
 AIC(rand.without, rand.with)
@@ -267,7 +307,7 @@ AIC(rand.without, rand.with)
 
 # new random effects
 m <- glmmTMB(
-  Indigenous ~ Year * scale(fence.dist) + (1 | Plot/Subplot),
+  Indigenous ~ Year + scale(fence.dist) + (1 | Plot/Subplot),
   family = genpois(),
   data = my.data
 )
@@ -313,7 +353,7 @@ ggplot()+
   annotation_north_arrow(location = "bl",
                          pad_x = unit(0.1, "cm"),
                          pad_y = unit(1, "cm"))+
-  ggtitle("Pember fan: random effects for biodiversity appear spatially autocorrelated")+
+ # ggtitle("Pember fan: random effects for biodiversity appear spatially autocorrelated")+
   theme(plot.title = element_text(size = 16, face =2, colour = "grey"))+
   labs(fill = "Random effect size", 
        shape = "Plot type",
@@ -326,8 +366,8 @@ ggsave("Pember fan random effect fence spatial.png",
 
 # trajectory of 
 
-summary(Models[[10]])
-ranef(Models[[10]])
+summary(Models[[7]])
+ranef(Models[[7]])
 
 # fence distances 
 range(my.data$fence.dist)
@@ -340,13 +380,11 @@ newdata <- expand_grid(Year = 0:8,
                       fence.dist  = fence.dist)
 newdata$fence.scale <-(newdata$fence.dist-fence.mean)/fence.sd 
 
-newdata$fitted <-   exp(0.483491 + (-0.016209 * newdata$Year) +  
-  (-0.114952 * newdata$fence.scale) +
-  (0.005134 * newdata$fence.scale * newdata$Year))
+newdata$fitted <-   exp(0.274240  + (-0.020738 * newdata$Year) +  
+  (-0.161643  * newdata$fence.scale) )
 
 newdata$fence.dist  <- as.factor(newdata$fence.dist )
 
-str(newdata)
 
 ggplot()+
   theme_bw() +

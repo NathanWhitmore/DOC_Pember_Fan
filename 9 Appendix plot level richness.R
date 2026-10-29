@@ -64,7 +64,6 @@ Cand.models[[2]] <- glmmTMB(Indigenous ~ Year + (1|Plot), family = genpois(), da
 Cand.models[[3]] <- glmmTMB(Indigenous ~ Exotic + (1|Plot), family = genpois(), data = no.species.wide)
 Cand.models[[4]] <- glmmTMB(Indigenous ~ Year + Exotic + (1|Plot), family = genpois(), data = no.species.wide)  
 Cand.models[[5]] <- glmmTMB(Indigenous ~ Year * Exotic + (1|Plot), family = genpois(), data = no.species.wide)
-# Cand.models[[6]] <- glmmTMB(Indigenous ~ Year * poly(Exotic,2) + (1|Plot), family = compois(), data = no.species.wide)
 
 # create a vector of names to trace back models in set
 Modnames <- paste("mod", 1:length(Cand.models), sep = " ")
@@ -134,8 +133,9 @@ summary(Cand.models[[5]])
 example <- no.species.wide %>% filter(Plot == "RR2" | Plot == "CA1"  | Plot == "RR7"| Plot == "CA15")
 
 example$fitted <- predict(Cand.models[[5]], newdata = example, type = "response")
-# manual <- exp(2.383900 + -0.006249 * example$Year + 0.015851 * example$Exotic -0.005358 * (example$Year * example$Exotic))
+manual <- exp(2.383900 + -0.004873 * example$Year + 0.015851 * example$Exotic -0.005358 * (example$Year * example$Exotic))
 
+summary(Cand.models[[5]])
 
 C <- ggplot()+
   theme_bw()+
@@ -146,7 +146,7 @@ C <- ggplot()+
   #scale_x_continuous(breaks = 4:20, labels = 4:20,  limits = c(3, 18))+
   #scale_y_continuous(breaks = 4:20, labels = 4:20,  limits = c(3, 9))+
   xlab("\nExpected Indigenous")+
-  theme(aspect_ratio = 1)+
+  #theme(aspect_ratio = 1)+
   theme(panel.grid = element_blank())+
   theme(legend.position = "bottom")
 

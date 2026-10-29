@@ -53,7 +53,7 @@ pember$key.species <- ifelse(pember$NVSSpeciesName == my.species,
 pember$Cover <- ifelse(is.na(pember$Cover), 0, pember$Cover)
 pember$Cover <- factor(
   pember$Cover,
-  levels = c("0", "P", "1", "2", "3", "4", "5", "6"),
+  levels = c("0", "1", "2", "3", "4", "5", "6"),
   ordered = TRUE
 )
  
@@ -104,6 +104,9 @@ nrow(all)
 # restrict to southern section for Sonchus and Brachyscome
 all <- all %>% filter(Y < 5225800)
 
+head(all)
+hist(as.numeric(all$Cover))
+
 # map
 ggplot()+
   theme_bw()+
@@ -112,9 +115,9 @@ ggplot()+
  #         shape = 3, size = 9, colour = "red")+
   geom_sf(data = cover.sf, 
           shape = 1)+
-  geom_sf(data = presences.sf  , 
-          aes(size = correct.prop), 
-          alpha = 0.7,
+  geom_sf(data = all  , 
+          aes(size = as.numeric(as.character(Cover))), 
+          alpha = 0.5,
           colour = "purple")+
   facet_wrap(~Year)+
   theme(panel.grid = element_blank())+
@@ -122,8 +125,12 @@ ggplot()+
   theme(axis.title = element_blank())+
   theme(axis.text = element_blank())+
   ggtitle(my.species)+
-  labs(size = "Corrected proportion")+
-  theme(plot.title = element_text(face = "italic"))
+  labs(size = "Cover class")+
+  theme(plot.title = element_text(face = "italic"))+
+  scale_size_continuous(
+    breaks = 1:6,
+    limits = c(1, 6)
+  )
 
 ggsave("Sonchus novae-zelandiae.png", scale =1.1, height = 6, width =8)
 
@@ -253,7 +260,7 @@ ggplot()+
     colour = "grey40"
   ))+
   theme(panel.grid = element_blank())+
-  ylab("Count\n")+
+  ylab("Proportion in class \n(excluding absences)\n")+
   xlab("\nCover class")
 
 ggsave("Predicted changes in SONNOV.png", scale = 1.1, height = 6, width =8)

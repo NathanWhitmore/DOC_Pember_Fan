@@ -56,7 +56,7 @@ pember$key.species <- ifelse(pember$NVSSpeciesName == my.species,
 # correct pember levels
 
 pember$Cover <- factor(pember$Cover, 
-                    levels = c("0", "P", "1", "2", "3", "4", "5", "6"),
+                    levels = c("0", "1", "2", "3", "4", "5", "6"),
                     ordered = TRUE)
 
 # simplify
@@ -81,6 +81,9 @@ presences
 # restrict to just RR3
 names(all)
 
+# legacy data frame for later graphing
+legacy <- all
+
 # restrict to RR section for Gingidia enysii
 all <- all %>% filter(Plot %in% c("RR3"))
 
@@ -99,7 +102,7 @@ all <- all |> ungroup()
 
 # annoyingly ordered factors are wiped
 all$Cover <- factor(all$Cover, 
-                       levels = c("0", "P", "1", "2", "3", "4", "5", "6"),
+                       levels = c("0",  "1", "2", "3", "4", "5", "6"),
                        ordered = TRUE)
 
 clmm.mod <- list()
@@ -126,6 +129,12 @@ summary(clmm.mod[[1]])
 # latex table
 kable(clmm.aic, "latex")
 
+# reattached spatial data
+spatial <- readRDS("Spatial.rds")
+
+trans.position <- left_join(legacy, spatial, by = "Plot" ) |>
+  st_as_sf()
+
 
 # map
 ggplot()+
@@ -135,9 +144,9 @@ ggplot()+
  #         shape = 3, size = 9, colour = "red")+
   geom_sf(data = cover.sf, 
           shape = 1)+
-  geom_sf(data = presences.sf  , 
-          aes(size = correct.prop), 
-          alpha = 0.7,
+  geom_sf(data = trans.position , 
+          aes(size = as.numeric(as.character(Cover))), 
+          alpha = 0.4,
           colour = "forestgreen")+
   facet_wrap(~Year)+
   theme(panel.grid = element_blank())+
@@ -145,81 +154,13 @@ ggplot()+
   theme(axis.title = element_blank())+
   theme(axis.text = element_blank())+
   ggtitle(my.species)+
-  labs(size = "Corrected proportion")+
-  theme(plot.title = element_text(face = "italic"))
-
-# ggsave("Gingidia enysii.png", scale =1.1, height = 6, width =8)
-
-# makes two columns for each random effect
-my.ranef <- ranef(clmm.mod[[5]]) %>% as.data.frame()
-my.ranef$total.random <- rowSums(my.ranef)
+  labs(size = "Cover class")+
+  theme(plot.title = element_text(face = "italic"))+
+  scale_size_continuous(
+    breaks = 1:6,
+    limits = c(1, 6)
+  )
 
 
-plot.subplot <- quantile(my.ranef$total.random, 0.95)
-store <- NULL
-
-my.year <- 0:7
-
-  for(i in 1:8){
-       
-         # get betas
-         my.year <- c(0, clmm.mod[[5]]$beta)
-       
-           
-         C0 <- plogis(1.4988 - ( my.year[i] + plot.subplot))
-         C1 <- plogis(2.4018 - ( my.year[i] + plot.subplot))
-         C2 <- plogis(3.3364 - ( my.year[i] + plot.subplot))
-         C3 <- plogis(5.1509 - ( my.year[i] + plot.subplot))
-         C4 <- plogis(7.2198 - ( my.year[i] + plot.subplot))
-         C5 <- plogis(9.9134 - ( my.year[i] + plot.subplot))
-         
-           
-           store[[i]] <- data.frame(cover.0 = round(C0 - 0, 3),
-                                        cover.1 = round(C1 - C0, 3),
-                                        cover.2 = round(C2 - C1, 3),
-                                        cover.3 = round(C3 - C2, 3),
-                                        cover.4 = round(C4 - C3, 3),
-                                        cover.5 = round(C5 - C4, 3),
-                                        cover.6 = round(1 - C5, 3))
-           
-  }
- 
-my.predictions  <- bind_rows(store)
-my.predictions$Year <- 2018:2025
-
-my.long <- my.predictions  |>
-  pivot_longer(cols = cover.0:cover.6,
-                   +               names_to =  "Cover",
-                                  values_to = "Proportion")
-
-# filter out cover class 0
-my.long <-  my.long  |> filter(Cover != "cover.0")
-
-my.long <- my.long %>% 
-  mutate(Cover = str_replace_all(Cover, "cover.", ""))
-
-my.long$Cover <- as.numeric(as.character(my.long$Cover))
-
-
-ggplot()+
-  theme_bw()+
-  geom_col(data = my.long, aes( x= Cover, y= Proportion),
-                        fill = "orange", colour = "white") +
-  facet_grid(~Year) +
-  theme(axis.title = element_text(
-         size = 14,
-         colour = "grey40"
-       )) + theme(axis.title = element_text(
-         size = 14,
-         colour = "grey40")) +
-   theme(strip.text = element_text(
-         size = 12,
-         colour = "grey40"
-       ))+
-     theme(panel.grid = element_blank())+
-     ylab("Count\n")+
-     xlab("\nCover class")
- 
-ggsave("Predicted changes in bare ground cover class.png", scale = 1.1, height = 6, width =8)
-
+ggsave("Gingidia enysii.png", scale =1.1, height = 6, width =8)
 

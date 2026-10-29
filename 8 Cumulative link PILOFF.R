@@ -82,9 +82,9 @@ ggplot()+
  # geom_sf(data = og.sf, 
   #        shape = 1)+
   # geom_sf(data = all %>% filter(as.numeric(Cover) >= 1)  , 
-  geom_sf(data = all %>% filter(as.numeric(Cover) == 1) ,
+  geom_sf(data = all %>% filter(as.numeric(Cover) >= 1) ,
           aes(size = Cover), 
-          alpha = 0.05,
+          alpha = 0.2,
           colour = "skyblue")+
   facet_wrap(~Year)+
   theme(panel.grid = element_blank())+
@@ -115,7 +115,6 @@ clmm.mod[[4]] <- clmm(Cover ~ Year + scale(fence.dist) + (1|Plot) + (1 | Subplot
 clmm.mod[[5]] <- clmm(Cover ~ as.factor(Year) + scale(fence.dist) + (1|Plot) + (1 | SubplotID),  data = all)
 clmm.mod[[6]] <- clmm(Cover ~ as.factor(Year) + scale(fence.dist) + Transect.type + (1|Plot) + (1 | SubplotID),  data = all)
 
-# clmm.mod[[6]] <- clmm(Cover ~ as.factor(Year) + (1|Plot) + (1 | SubplotID), data = all)
 
 # create a vector of names to trace back models in set
 Modnames <- paste("mod", 1:length(clmm.mod), sep = " ")
@@ -136,6 +135,7 @@ kable(clmm.aic, "latex")
 
 # manual predictions
 # summary
+summary(clmm.mod[[6]])
 summary(clmm.mod[[5]])
 
 # checks - Plot random effect not really supported
@@ -149,7 +149,7 @@ fence.sd <- sd(all$fence.dist, na.rm = TRUE)
 fence.dist.scaled <- (all$fence.dist - fence.mean)/fence.sd
 
 # makes two columns for each random effect
-my.ranef <- ranef(clmm.mod[[5]]) %>% as.data.frame()
+my.ranef <- ranef(clmm.mod[[6]]) %>% as.data.frame()
 my.ranef$total.random <- rowSums(my.ranef)
 
 # choose subplots where the species is likely to be found
@@ -200,7 +200,7 @@ my.long <- my.predictions  |>
                values_to = "Proportion")
 
 # filter out cover class 0
-my.long <-  my.long  |> filter(Cover != "cover.0")
+# my.long <-  my.long  |> filter(Cover != "cover.0")
 
 my.long <- my.long %>% 
   mutate(Cover = str_replace_all(Cover, "cover.", ""))
@@ -224,9 +224,8 @@ ggplot()+
     colour = "grey40"
   ))+
   theme(panel.grid = element_blank())+
-  ylab("Percentage in class \n(excluding absences)\n")+
+  ylab("Proportion in class \n(including absences)\n")+
   xlab("\nCover class")
-
 
 ggsave("Predicted changes in PILOFF.png", scale = 1.1, height = 6, width =8)
 

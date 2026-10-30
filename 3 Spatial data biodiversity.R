@@ -6,6 +6,7 @@ library(sf)
 library(glmmTMB)
 library(spdep)
 library(kableExtra)
+library(AICcmodavg)
 
 # load data
 convenant <- st_read("Lees_Valley_Convenant_Transects_20191220.gpx")
@@ -243,8 +244,6 @@ Models[[7]] <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot/Subplot),
 Models[[8]] <- glmmTMB(Indigenous ~ scale(river.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 Models[[9]] <- glmmTMB(Indigenous ~ scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 Models[[10]] <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
-# Models[[7]] <- glmmTMB(Indigenous ~ Year + Exotic + scale(river_dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
-#Models[[8]] <- glmmTMB(Indigenous ~ Year * scale(river_dist) + (1|Plot/Subplot), family = genpois(), data = my.data) 
 
 # create a vector of names to trace back models in set
 Modnames <- paste("mod", 1:length(Models), sep = " ")

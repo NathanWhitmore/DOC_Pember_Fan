@@ -81,7 +81,7 @@
 
 
 \noindent \textsf{nathan@reproducible.co.nz}\\
-\noindent \textsf{7 October 2026}
+\noindent \textsf{27 October 2026}
 
 \end{flushright}
 
@@ -107,19 +107,31 @@
 
 The Pember Fan is an alluvial outwash surface in Lees Valley, North Canterbury, formed from gravels deposited where the Ashley/Rakahuri River emerges into the valley \citep{newell}. Much of the area is classified as a 'threatened land environment’. The fan supports a grassland which includes several nationally threatened and at-risk plants, most notably the nationally critical Lees Valley daisy (\emph{Brachyscome pinnata}), whose only known natural population occurs there and whose seeds, unlike most members of the Asteraceae family, are not wind dispersed \citep{newell}. Other threatened species known to inhabit the fan include \emph{Gingidia enysii}, \emph{Sonchus novae-zelandiae} and \emph{Raoulia monroi}\footnote{Not present in the transect data}.
 
-In 2018 the Department of Conservation established a monitoring programme based on 30 transects\footnote{Called Plots in the parent data set.} (each with 50 subplots) to monitor vegetative changes in this ecosystem through time \citep{newell}. The intended purpose of the monitoring was to assess changes in the site’s conservation values to inform ongoing management. Of particular interest were changes in the abundance of threatened native species especially \emph{Brachyscome pinnata}, changes in native and exotic vegetation, and weed occurrence.  Collectively, this information would be used by DOC to offer guidance on the frequency and intensity grazing (in order to promote native species diversity and conservation).
+In 2018 the Department of Conservation established a monitoring programme based on 30 transects\footnote{Called Plots in the parent data set.} (each with 50 subplots) to monitor vegetative changes in this ecosystem through time \citep{newell}. The intended purpose of the monitoring was to assess changes in the site’s conservation values to inform ongoing management. Of particular interest were changes in the abundance of threatened native species especially \emph{Brachyscome pinnata}, changes in native and exotic vegetation, and weed occurrence.  Collectively, this information would be used by DOC to offer guidance on the frequency and intensity of grazing (in order to promote native species diversity and conservation).
 
 Key metrics focused on changes in:
 
 \begin{itemize}
   \item Indigenous biodiversity
-  \item Plant composition (especially threatened species) 
-  \item Ground cover
+  \item Plant composition 
+  \item Ground cover (especially threatened species) 
 \end{itemize}
 
-The 30 transects which make up the monitoring programme consist of two types: (1)  ten closely spaced transects restricted to a recreational reserve, and (2) twenty more widely spaced transects found across a planned conservation covenant.
+The 30 transects which make up the monitoring programme consist of two types: (1)  ten closely spaced transects restricted to a recreation reserve, and (2) twenty more widely spaced transects found across a planned conservation covenant (see Appendix Figure \ref{fig:signal.corrected} for layout).
 
-Importantly, as quantitative data on the grazing intensity has not been kept and there has been a switch from sheep grazing to cattle this metric cannot be analytically investigated.
+Importantly, as quantitative data on the grazing intensity has not been kept and there has been a switch from farming sheep to farming cattle this metric cannot be analytically investigated.
+
+
+
+\begin{figure}[h]
+\centering
+     \includegraphics[width=12cm,keepaspectratio]{"Pember fan layout.png"}
+     \caption{General layout of the Pember Fan transects in relation to the Ashley/Rakahuri River. Key: red line = fence line, green points = transects in planned covenant, pink points = transects in recreation reserve. }
+     \label{fig:distance.fence}
+     
+\end{figure}
+
+
 
 
 \section*{Purpose of current analysis}
@@ -127,28 +139,28 @@ Importantly, as quantitative data on the grazing intensity has not been kept and
 It is hypothesised that the current grazing regime is insufficient to regulate the crowding out of native herbs by exotic grasses on the Pember Fan. Going forward it was agreed that a two-stage analysis of the data would take place:
 
 \begin{itemize}
-  \item \textbf{Stage 1:} Would consist of a series of retrospective analyses to understand the trajectories at the site in respect of the three metrics previously identified. The deliverables were to include a short report that would inform a discussion with Richard Clayton and Ellen Cieraad regarding the direction of the next stage [this document].
-  \item \textbf{Stage 2:} Based on the decisions undertaken at the end of Stage 1, the signals present in the data, and operational constraints, a series of statistical tools would be employed to identify the design parameters required to detect the effectiveness of a future management intervention (not covered here).
-  
-Consequently, this report represents the culmination of Stage 1.
+  \item \textbf{Stage 1:} Would consist of a series of retrospective analyses to understand the trajectories at the site in respect of the three metrics previously identified. The deliverables were to include a short report that would inform a discussion within DOC regarding the direction of the next stage [this document].
+  \item \textbf{Stage 2:} Based on the decisions undertaken at the end of Stage 1, the signals present in the data, and operational constraints, a series of statistical tools would be employed to help design an experimental study to understand the effectiveness of any future management intervention (not covered here).
   
 \end{itemize}
+
+\textbf{This report represents the culmination of Stage 1.}
   
 
 \section*{Analysis}
 
-The analysis began with some simple proof-of-concept analyses involving indigenous biodiversity and sequentially introduced complexity as contextual understanding grew. Indigenous biodiversity was examined using generalised linear mixed-effect models (GLMMs), species composition was approached visually, while bare ground and species coverage were assessed using cumulative link models (CLMMs).
+Statistical analysis began with some simple proof-of-concept analyses involving indigenous biodiversity and sequentially introduced complexity as contextual understanding grew. Indigenous biodiversity was examined using generalised linear mixed-effects models (GLMMs), species composition was approached visually, while bare ground and species coverage were assessed using cumulative link models (CLMMs).
 
 All analyses were undertaken in program R version 4.4.2 \citep{rcode}, using a series of packages for increased functionality including: `AICcmodavg' \citep{AICcmodavg}, `glmmTMB' \citep{glmmTMB}, `ordinal' \citep{ordinal}, `sf' \citep{sf}, and the `tidyverse' \citep{tidyverse}. An information-theoretic approach (\emph{sensu} \citealt{burnham}) was used to rank candidate models in terms of parsimony (see Appendix for relevant model selection tables).
 
 
 \subsection*{Indigenous biodiversity}
 
-Initial exploratory modelling focused on indigenous biodiversity due to its high tangibility and suggested the area is becoming more depauperate over time (see Appendix). When more complex analyses were undertaken incorporating spatial elements it was revealed  that while the transects across the covenant area (CA plots) were well dispersed across the fan, the RR plots were tightly clustered within a reserve found on the southern edge of the fan but within the wider CA extent. Such tight spatial clustering typically presents a problem in terms of sampling bias and raises issues of spatial autocorrelation. Formal tests of the random errors via Moran's I test confirmed that there was some form of spatial autocorrelation. Initial models\footnote{At the suggestion of Ellen Cieraad I implemented a series of models which examined whether the response variable was associated with a decaying distance relationship with neighbouring observations i.e. via a \emph{exp(pos + 0 $\mid$ spatial\_group)}.} failed to converge raising the possibility there might be a directional gradient underpinning the random errors. 
+Initial exploratory modelling focused on indigenous biodiversity due to its high tangibility and suggested the area is becoming more depauperate over time (see Appendix for details). When more complex analyses were undertaken incorporating spatial elements it was revealed  that while the transects across the covenant area plots (CA) were well dispersed across the fan, the recreation reserve plots (RR) were tightly clustered within a reserve found on the southern edge of the fan but within the wider CA extent. Such tight spatial clustering typically presents a problem in terms of sampling bias and raises issues of spatial autocorrelation. Formal tests of the random errors via Moran's I test failed to confirm that there was some form of spatial autocorrelation\footnote{At the suggestion of Ellen Cieraad I implemented a series of models which examined whether the response variable was associated with a decaying distance relationship with neighbouring observations i.e. via an \emph{exp(pos + 0 $\mid$ spatial\_group)} however these failed to detect a spatial effect}. 
 
-Plotting the random errors associated with the top-ranked model suggested a spatial relationship running perpendicular to the Ashley River (Figure \ref{fig:spatial.signal}). Richard Clayton's suggestion that the relationship might be better described by the relationship with the fence line was then tested. Indeed, modelling revealed that there was likely some gradient influencing the biodiversity response associated with distance from the fence line (Figure \ref{fig:signal.corrected}). Inclusion of this term resulted in the random errors associated with plot diminishing substantially, and a new top-ranked model being established. 
+Plotting the random errors associated with the top-ranked model suggested a spatial relationship running perpendicular to the Ashley River (Figure \ref{fig:spatial.signal}). Richard Clayton's suggestion that the relationship might be better described by the relationship with the fence line was then tested. Indeed, modelling revealed that there was likely some gradient influencing the biodiversity response associated with distance from the fence line (Figure \ref{fig:signal.corrected}). Inclusion of this term resulted in smaller random effects. It should be noted that one transect (CA12) falls behind the existing fence line and that this variable likely represents an association with a general east-west gradient rather than the fence line physically having some meaningful causal effect.
 
-The predictions from the new top-ranked model (\emph{Year * scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.63) suggested that samples found closer to the fence line have higher indigenous biodiversity but are more likely to lose indigenous species at a faster rate than those located further away (Figure \ref{fig:distance.fence}).
+The predictions from the new top-ranked model (\emph{Year + scale(fence.dist) + (1 $\mid$ Plot/Subplot)}, AICc weight = 0.72, see Appendix for details) suggested that samples found closer to the fence line had higher indigenous biodiversity but all plots lost biodiversity over time at an equivalent rate (Figure \ref{fig:distance.fence}).
 
 
 
@@ -156,7 +168,7 @@ The predictions from the new top-ranked model (\emph{Year * scale(fence.dist) + 
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Pember Fan distance from fence.png"}
-     \caption{Top-ranked biodiversity model predicted samples closer to the fence line had higher initial indigenous biodiversity but were more likely to lose indigenous species at a faster rate than those located further away. Note: model predictions are shown on the real scale.}
+     \caption{The top-ranked biodiversity model predicted samples closer to the fence line had higher initial indigenous biodiversity but lost indigenous species at the same rate as those located further away. Note: model predictions are shown on the real scale.}
      \label{fig:distance.fence}
      
 \end{figure}
@@ -164,7 +176,7 @@ The predictions from the new top-ranked model (\emph{Year * scale(fence.dist) + 
 
 \subsection*{Bare ground cover}
 
-Analyses of bare ground were conducted as cover classes via cumulative link mixed-effect models (which account for the non-independence of the subplots). Bare ground was also assessed as approximate proportions by transforming cover classes into proportions at the subplot level. While other cover classes on the fan appear to be stable, it is evident that bare ground appears to be disappearing regardless of metric (Figure \ref{fig:barecoverclass}, \ref{fig:bare}, \& \ref{fig:bgcover}). The top-ranked model was \emph{as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)} (AICc weight = 0.57). The predictions from this model (Appendix Figure \ref{fig:barepred}) closely align with those observed (Figure \ref{fig:barecoverclass}). The second-ranked model replicated the variables of the first but with the inclusion of distance from fence, and indicated bare ground increased with distance from the fence (AICc weight = 0.43). The stronger support for \emph{Year} as a factor rather than as a continuous variable suggests that bare ground cover varies year-to-year in a more idiosyncratic manner rather than simply a linear trend over time.
+Analyses of bare ground were conducted as cover classes via cumulative link mixed-effect models (which account for the non-independence of the subplots). Bare ground was also graphically assessed by transforming cover classes into approximate proportions at the subplot level (based on the mid-point of the Braun–Blanquet scale). While other cover classes on the fan appear to be stable, it is evident that bare ground appears to be disappearing regardless of metric (Figures \ref{fig:barecoverclass}, \ref{fig:bare}, \& \ref{fig:bgcover}). The top-ranked model was \emph{as.factor(Year) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)} (AICc weight = 0.57). The predictions from this model (see Appendix Figure \ref{fig:barepred}) closely align with those observed (Figure \ref{fig:barecoverclass}). The second-ranked model replicated the variables of the first but with the inclusion of distance from fence, and indicated bare ground increased with distance from the fence (AICc weight = 0.43). The stronger support for \emph{Year} as a factor rather than as a continuous variable suggests that bare ground cover varies year-to-year in a more idiosyncratic manner rather than simply a linear trend over time.
 
 
 \vspace{3mm}
@@ -192,7 +204,7 @@ Analyses of bare ground were conducted as cover classes via cumulative link mixe
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Cover proportion.png"}
-     \caption{Bird's eye view: spatial distribution of bare ground across the Pember Fan for each monitoring year. Key: facetted by time where Year 0 = summer 2018--2019. Note: spatial points represent the overlay of all occurrences of bare ground recorded at the subplot level within a transect (plot).}
+     \caption{Bird's-eye view: spatial distribution of bare ground across the Pember Fan for each monitoring year. Key: facetted by time where Year 0 = summer 2018--2019. Note: spatial points represent the overlay of all occurrences of bare ground recorded at the subplot level within a transect (plot).}
      \label{fig:bgcover}
      
 \end{figure}
@@ -201,9 +213,9 @@ Analyses of bare ground were conducted as cover classes via cumulative link mixe
 
 \subsection*{Plant composition}
 
-Plant composition was analysed graphically by transforming cover classes into approximate proportions at the subplot level. Collectively, the species composition was dominated by exotic plants, although over time indigenous plants gradually represented a greater proportion of the species present (Figure \ref{fig:TaxonBiostatus}).
+Plant composition was analysed graphically; represented as the aggregated proportion of species recorded as present across all subplots. Collectively, the species composition was dominated by exotic plants (Figure \ref{fig:TaxonBiostatus}).
 
-Across the transects there was a trend towards increasing dominance of species with graminoid (grass-like) growth forms and away from forbs (Figure \ref{fig:TaxonGrowthForm}). This appears to be a generalised trend, with a similar pattern occurring on transects inside the DOC reserve and the wider covenant area  (Figures \ref{fig:bytransforbs} \& \ref{fig:bytransgrass}). It is not only exotic grasses which appear to be increasingly dominating the Pember Fan but indigenous grasses as well, while at the same time the coverage by indigenous forbs is declining (Figure \ref{fig:bytransgrass}). While there are some differences between transect types the composition of the grass species seems to be relatively stable,  dominated by \emph{Agrostis capillaris}, \emph{Anthoxanthum odoratum} and \emph{Rytidosperma clavatum}. Both transect types document the gradual disappearance of \emph{Vulpia bromoides}, a species often associated with disturbance (Figure  \ref{fig:top8grass}). In contrast, the forb community appears to be completely dominated by the hawkweed \emph{Pilosella officinarum} (Figure \ref{fig:top8forb}).
+Over time there was a trend towards increasing dominance of species with graminoid (grass-like) growth forms and away from forbs (Figure \ref{fig:TaxonGrowthForm}). This appears to be a generalised trend, with a similar pattern occurring on transects inside the recreation reserve and planned covenant area (Figures \ref{fig:bytransforbs} \& \ref{fig:bytransgrass}). It is not only exotic grasses which appear to be increasingly dominating the Pember Fan but indigenous grasses as well, while at the same time the coverage by indigenous forbs is declining (Figure \ref{fig:bytransgrass}). While there are some differences between transect types the composition of the grass species seems to be relatively stable,  dominated by \emph{Agrostis capillaris}, \emph{Anthoxanthum odoratum} and \emph{Rytidosperma clavatum}. Both transect types document the gradual disappearance of \emph{Vulpia bromoides}, a species often associated with disturbance (Figure  \ref{fig:top8grass}). The appearance of \emph{Aira caryophyllea} appears to be periodic and largely restricted to the recreation reserve (Figure  \ref{fig:top8grass}). In contrast, the forb community appears to be dominated by the hawkweed \emph{Pilosella officinarum} (Figure \ref{fig:top8forb}).
 
 \vspace{3mm}
 
@@ -219,7 +231,7 @@ Across the transects there was a trend towards increasing dominance of species w
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"TaxonGrowthForm.png"}
-     \caption{The vegetation of the Pember Fan is dominated by forbs and increasingly grasses.}
+     \caption{The vegetation of the Pember Fan is dominated by forbs and, increasingly, grasses.}
      \label{fig:TaxonGrowthForm}
      
 \end{figure}
@@ -229,7 +241,7 @@ Across the transects there was a trend towards increasing dominance of species w
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"TaxonGrowthForm by Transect type.png"}
-     \caption{Patterns of plant composition were generally consistent across the transects, although those within the covenant area (CA) appeared marginally more susceptible to grass incursion than the reserve area (RR).}
+     \caption{Patterns of plant composition were generally consistent across the transects. Key: planned covenant area = CA, recreation reserve area = RR.}
      \label{fig:bytransforbs}
      
 \end{figure}
@@ -240,7 +252,7 @@ Across the transects there was a trend towards increasing dominance of species w
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"TaxonGrowthForm by Transect x Biostatus.png"}
-     \caption{Forbs appear to be giving way to both exotic and indigenous grasses across both reserve area (RR) and covenant area (CA) transects.}
+     \caption{Forbs both exotic and indigenous appear to be diminishing in proportional cover in both the planned covenant area (CA), and recreation reserve area (RR).}
     \label{fig:bytransgrass}
      
 \end{figure}
@@ -250,7 +262,7 @@ Across the transects there was a trend towards increasing dominance of species w
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Top 8 grass species.png"}
-     \caption{The composition of the top eight grass species seems to be comparatively stable with the notable exception of \emph{Vulpia bromoides} which appears to be diminishing.}
+     \caption{The composition of the top eight grass species seems to be comparatively stable with the notable exception of \emph{Vulpia bromoides} and \emph{Aira caryophyllea}.}
      \label{fig:top8grass}
      
 \end{figure}
@@ -261,7 +273,7 @@ Across the transects there was a trend towards increasing dominance of species w
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Top 8 forb species.png"}
-     \caption{The composition of the top eight forb species appears to be completely dominated by the hawkweed \emph{Pilosella officinarum}. }
+     \caption{The composition of the top eight forb species appears to be increasingly dominated by the hawkweed \emph{Pilosella officinarum}. }
       \label{fig:top8forb}
      
 \end{figure}
@@ -270,25 +282,27 @@ Across the transects there was a trend towards increasing dominance of species w
 
 \subsection*{Key species}
 
-The three plant species present on the fan with the highest threat classification were singled out for modelling\footnote{I note that while the fan-leaved mat daisy \emph{Raoulia monroi} (Nationally Vulnerable) has been reported as being present in the valley it was not recorded in the current dataset.}. These were:
+Three indigenous plant species present on the fan with the highest threat classification, and the most dominant exotic species were singled out for modelling\footnote{I note that while the fan-leaved mat daisy \emph{Raoulia monroi} (Nationally Vulnerable) has been reported as being present in the valley it was not recorded in the current dataset.}. These were:
 
 \begin{itemize}
-  \item Lees Valley Daisy, \emph{Brachyscome pinnata} (Nationally Critical)
-  \item Dryland sow thistle \emph{Sonchus novae-zelandiae} (Nationally Vulnerable) 
-    \item Limestone aniseed \emph{Gingidia enysii} (Nationally Endangered) 
+  \item Lees Valley daisy, \emph{Brachyscome pinnata} (Nationally Critical)
+  \item Dryland sow thistle, \emph{Sonchus novae-zelandiae} (Nationally Vulnerable) 
+  \item Limestone aniseed, \emph{Gingidia enysii} (Nationally Endangered) 
+  \item The exotic hawkweed, \emph{Pilosella officinarum}
 
 \end{itemize}
 
+
 As plant cover was estimated using ordered cover class categories, cumulative link models with random effects (CLMMs) were employed for modelling. 
 
-\emph{Brachyscome pinnata} appears to be constrained to transects on the southern portion of the fan and appears to be fast disappearing (Figure \ref{fig:brapin}). Cumulative modelling revealed that the top-ranked model with unanimous support was \emph{as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}, which revealed cover for this species is declining especially in the last three years, and there is a trend of higher coverage closer to the fence (although this remains non-significant). 
+\emph{Brachyscome pinnata} appears to be constrained to transects on the southern portion of the fan and appears to be fast disappearing (Figure \ref{fig:brapin}). Cumulative modelling revealed that the top-ranked model with unanimous support was \emph{as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}, which revealed cover for this species is declining especially in the last three years, and there is a trend of higher coverage closer to the fence. 
 
-There is some evidence that \emph{Sonchus novae-zelandiae} is declining through time (Figure \ref{fig:sonnov}; top-ranked model \emph{Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID}, AICc weight = 0.41)(see Appendix \ref{fig:sonchus.pred}). However, this is contested by the second-ranked model suggests the pattern might be solely attributable to distance from fence (i.e. \emph{scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}, AICc weight = 0.37).
+There is some evidence that \emph{Sonchus novae-zelandiae} is declining through time (Figure \ref{fig:sonnov}; top-ranked model \emph{Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID}, AICc weight = 0.41)(see Appendix Figure \ref{fig:sonchus.pred}). However, this is contested by the second-ranked model which suggests the pattern might be solely attributable to distance from fence (i.e. \emph{scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}, AICc weight = 0.37).
 
-\emph{Gingidia enysii} has only been found on two transects (once in a single subplot on R10 and in five subplots on RR3). Modelling was restricted to RR3 (hence no plot random effect was included) and the candidate model set was limited to a null model, a year effect, and a year-as-factor effect. The top-ranked model (\emph{1 + (1 $\mid$ SubplotID)}) suggested the presence of \emph{G. enysii} was best explained as a simple average (AIC weight = 0.68), while the second-ranked model (\emph{Year  + (1 $\mid$ Subplot)}  suggested that the cover class of the species was increasing year-on-year (AIC weight = 0.26) likely due to a proliferation at a single subplot (RR3 subplot 960).
+\emph{Gingidia enysii} has only been found on two transects (once in a single subplot on RR10 and in five subplots on RR3). Modelling was restricted to RR3 (hence no plot random effect was included) and the candidate model set was limited to a null model, a year effect, and a year-as-factor effect. The top-ranked model (\emph{1 + (1 $\mid$ SubplotID)}) suggested the presence of \emph{G. enysii} was best explained as a simple average (AIC weight = 0.68), while the second-ranked model (\emph{Year  + (1 $\mid$ SubplotID)}  suggested that the cover class of the species was increasing year-on-year (AIC weight = 0.26) likely due to a proliferation at a single subplot (RR3 subplot 960).
 
 
-
+The top-ranked model associated with \emph{Pilosella officinarum} was  \emph{as.factor (Year) + scale(fence.dist) + Transect.type + (1 $\mid$ Plot) + (1 $\mid$ SubplotID)}. Support for this model was heavily contested by  the second-ranked model  (AICc weight = 0.53 vs 0.47, respectively; see Appendix for details). The two model equations only differed in terms of inclusion of the \emph{Transect} term with the top-ranked model indicating that the hawkweed was more likely to have greater cover in the recreation reserve than the planned covenant. However, both models indicated that \emph{Pilosella officinarum} cover was reducing over time\footnote{Note: no map has been produced for this species as it is found at all transects thereby obscuring any subtle year-on-year differences}. While \emph{Pilosella officinarum} increasingly dominates the forb category it is important to recognise that forbs in general are diminishing in terms of ground cover across the Pember Fan (Figure \ref{fig:TaxonGrowthForm}), and that this result is not counter-intuitive, and consistent with a compositional change from forbs to grasses.
 
 \begin{landscape}
 \begin{figure}[h]
@@ -308,7 +322,7 @@ There is some evidence that \emph{Sonchus novae-zelandiae} is declining through 
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Sonchus novae-zelandiae.png"}
-     \caption{\emph{Sonchus novae-zelandiae} is only found on the southern portion of the fan but does not appear to be at imminent risk of local extinction.}
+     \caption{\emph{Sonchus novae-zelandiae} is only found on the southern portion of the fan. While there is some statistical support for a decline over time this is contested by alternate models.}
      \label{fig:sonnov}
      
 \end{figure}
@@ -322,7 +336,7 @@ There is some evidence that \emph{Sonchus novae-zelandiae} is declining through 
 \begin{figure}[h]
 \centering
      \includegraphics[width=18cm,keepaspectratio]{"Gingidia enysii.png"}
-     \caption{\emph{Gingidia enysii} has only been found on two plots in the recreational reserve and only reliably at a single subplot.}
+     \caption{\emph{Gingidia enysii} has only been found on two plots in the recreation reserve and only reliably at a single subplot.}
      \label{fig:ging}
      
 \end{figure}
@@ -333,9 +347,7 @@ There is some evidence that \emph{Sonchus novae-zelandiae} is declining through 
 
 \section*{Conclusions}
 
-As evidenced by this retrospective analysis, the current monitoring regime has proven entirely adequate for assessing community and population trajectories on the Pember Fan and for this reason should be continued without change. The trajectories found in the data set align with the observations and assessments of DOC staff. Grasses (both exotic and indigenous) are increasing in areal coverage. At the same time the amount of bare ground is shrinking and there are indications the fan is becoming more depauperate over time. \emph{Brachyscome pinnata} (Nationally Critical), an indigenous forb restricted to the southern half of the fan, is disappearing quickly, and global extinction appears imminent if its current trajectory continues.  
-
-In light of current management constraints, an experimental approach in terms of grazing has been assessed as impractical. However, localised experimental plots could be established on the fan, but outside the current transect lines to trial the effectiveness of vegetation control via controlled intervention around known \emph{Brachyscome pinnata} plants. Such an experiment should have the benefit of minimal impingement on farm activities while increasing understanding of effects of potential management interventions on presence and abundance of targetted herbaceous species.
+As evidenced by this retrospective analysis, the current monitoring regime appears adequate for assessing community and population trajectories on the Pember Fan and for this reason should be continued without change. The trajectories found in the data set align with the observations and assessments of DOC staff. Grasses (both exotic and indigenous) are increasing in areal coverage. At the same time the amount of bare ground is shrinking and there are indications the fan is becoming more depauperate over time. \emph{Brachyscome pinnata} (Nationally Critical), an indigenous forb restricted to the southern half of the fan, is disappearing quickly, and global extinction appears imminent if its current trajectory continues.  In light of current management constraints, an experimental approach in terms of grazing has been assessed as impractical. However, this should not preclude the development of alternative experimental designs assessing the effect of grass control.
 
 
 \bibliography{pember}
@@ -378,7 +390,6 @@ Note: CLMM models can't cope with standard nesting notation so \emph{SubplotID} 
 \begin{tabular}{l|r|r|r|r|r}
 \hline
 \textbf{Model} & \textbf{K} & \textbf{AICc} & \textbf{Delta\_AICc} & \textbf{AICc Weight} & \textbf{LL}\\
-\hline
 \hline
 as.factor(Year) + (1 | Plot) + (1 | SubplotID) & 15 & 11322.54 & 0.000 & 0.572 & -5646.251\\
 \hline
@@ -501,16 +512,61 @@ Note: CLMM models can't cope with standard nesting notation so \emph{SubplotID} 
 
 \vspace{10mm}
 
-\noindent As a null model was the top-ranked model, there is unlikely to be a temporal trend so no graph has been produced.
+\noindent As a null model was the top-ranked model, there is unlikely to be a temporal trend, so no graph has been produced.
 
 \end{landscape}
 
 
+\begin{landscape}
+\subsection*{\emph{Pilosella officinarum} -- model selection}
+
+Note: CLMM models can't cope with standard nesting notation so \emph{SubplotID} is constructed as a plot-specific subplot random effect.
+
+\vspace{3mm}
+
+\footnotesize
+
+\begin{tabular}{l|r|r|r|r|r}
+
+\hline
+\textbf{Model} & \textbf{K} & \textbf{AICc} & \textbf{Delta\_AICc} & \textbf{AICc Weight} & \textbf{LL}\\
+
+\hline
+ as.factor(Year) + scale(fence.dist) + Transect.type + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 17 & 30464.32 & 0.000 & 0.534 & -15215.14\\
+\hline
+ as.factor(Year) + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 16 & 30464.59 & 0.271 & 0.466 & -15216.27\\
+\hline
+ Year + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 9 & 30837.53 & 373.211 & 0.000 & -15409.76\\
+\hline
+ Year + scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 10 & 30838.40 & 374.077 & 0.000 & -15409.19\\
+\hline
+ scale(fence.dist) + (1 $\mid$ Plot) + (1 $\mid$ SubplotID) & 9 & 31711.20 & 1246.873 & 0.000 & -15846.59\\
+\hline
+ 1 + (1 $\mid$ Plot) + (1 $\mid$ Subplot) & 8 & 38044.01 & 7579.693 & 0.000 & -19014.00\\
+\hline
+\end{tabular}
+
+\vspace{10mm}
+
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[h]
+\centering
+     \includegraphics[width=18cm,keepaspectratio]{"Predicted changes in PILOFF.png"}
+     \caption{The predicted change in cover class of \emph{Pilosella officinarum} based on the 50\textsuperscript{th} percentile of random effects (chosen because most plots have some history of this species being present).}
+     \label{fig:PILOFF.pred}
+     
+\end{figure}
+\end{landscape}
+
+
+
 \subsection*{Initial biodiversity analysis}
 
-When indigenous biodiversity is only assessed at the plot level a pattern (top-ranked model: \mytilde \emph{Year * Exotic + (1 $\mid$ Plot)}, AIC weight = 0.74) emerges in which indigenous biodiversity appears to reduce over time along with exotic biodiversity (Figure \ref{fig:simpl.biodiversity}). This model was found to have good predictive agreement, thereby suggesting the community might be becoming more depauperate over time. However, upon discussion the pattern was regarded as potentially spurious due to the sensitivity of the plot-level metric to chance, non-representative species occurrences. Further discussion led to the request to retain the nested design (i.e. 1 $\mid$ Plot/Subplot) regardless if the random effects for a particular metric were supported in each particular case. 
+When indigenous biodiversity is only assessed at the plot level\footnote{treating each subplot as a replicate}, a pattern (top-ranked model: \mytilde \emph{Year * Exotic + (1 $\mid$ Plot)}, AIC weight = 0.85) emerges in which indigenous biodiversity appears to reduce over time along with exotic biodiversity (Figure \ref{fig:simpl.biodiversity}). This model was found to have good predictive agreement, thereby suggesting the community might be becoming more depauperate over time. However, upon discussion the pattern was regarded as potentially spurious due to the sensitivity of the plot-level metric to chance, non-representative species occurrences it was determined that a nested plot-subplot approach would be a fairer test given the study design (see Indigenous biodiversity section in the report).
 
-During the exploratory process I identified that there was meaningful underdispersion (i.e the variance in biodiversity results was less than expected). Use of the generalised Poisson distribution family improved diagnostics but only use of a Conway-Maxwell Poisson distribution settled them to a desirable level. However, the Conway-Maxwell Poisson distribution proved to have a massive impact on computability (with inclusion of subplot level random effects causing such slowness it effectively negated any practical usage). Given that the coefficients produced by generalised Poisson and Conway-Maxwell Poisson distributions were generally very similar to each other, I was advised to use the generalised Poisson.
+During the exploratory process I identified that there was meaningful underdispersion (i.e the variance in biodiversity results was less than expected). Use of the generalised Poisson distribution family improved diagnostics but the use of a Conway-Maxwell Poisson distribution was generally better. However, the Conway-Maxwell Poisson distribution proved to have a massive impact on computability (with inclusion of subplot level random effects causing such slowness it effectively negated any practical usage). Given that the coefficients produced by generalised Poisson and Conway-Maxwell Poisson distributions were generally very similar to each other, I was advised to use the generalised Poisson.
 
 
 \begin{landscape}
@@ -544,6 +600,74 @@ During the exploratory process I identified that there was meaningful underdispe
 \end{figure}
 \end{landscape}
 
+
+\begin{landscape}
+\subsection*{Final biodiversity analysis -- model selection}
+
+\vspace{10mm}
+
+\begin{tabular}{l|l|r|r|r|r|r}
+\hline
+\textbf{Model} & \textbf{K} & \textbf{AICc} & \textbf{Delta\_AICc} & \textbf{AICc Weight} & \textbf{LL}\\
+\hline
+ Year + scale(fence.dist) + (1 | Plot/Subplot) & 6 & 28504.26 & 0.000 & 0.718 & -14246.13\\
+\hline
+ Year * scale(fence.dist) + (1 | Plot/Subplot) & 7 & 28506.23 & 1.972 & 0.268 & -14246.11\\
+\hline
+ Year + scale(river.dist) + (1 | Plot/Subplot) & 6 & 28512.43 & 8.175 & 0.012 & -14250.21\\
+\hline
+ Year + (1 | Plot/Subplot) & 5 & 28518.16 & 13.903 & 0.001 & -14254.08\\
+\hline
+ Year + Exotic + (1 | Plot/Subplot) & 6 & 28518.59 & 14.333 & 0.001 & -14253.29\\
+\hline
+ Year * Exotic + (1 | Plot/Subplot) & 7 & 28520.06 & 15.804 & 0.000 & -14253.03\\
+\hline
+ Exotic + (1 | Plot/Subplot) & 5 & 28603.28 & 99.020 & 0.000 & -14296.64\\
+\hline
+ scale(fence.dist) + (1 | Plot/Subplot) & 5 & 28610.23 & 105.971 & 0.000 & -14300.11\\
+\hline
+ scale(river.dist) + (1 | Plot/Subplot) & 5 & 28618.71 & 114.454 & 0.000 & -14304.35\\
+\hline
+ 1 + (1 | Plot/Subplot) & 4 & 28624.38 & 120.126 & 0.000 & -14308.19\\
+\hline
+\end{tabular}
+
+\clearpage
+
+
+\subsection*{Final biodiversity analysis -- top-ranked model}
+
+\vspace{10mm}
+
+\begin{verbatim}
+
+Family: genpois  ( log )
+Formula:    Indigenous ~ Year + scale(fence.dist) + (1 | Plot/Subplot)
+Data: my.data
+
+      AIC       BIC    logLik -2*log(L)  df.resid 
+  28504.3   28548.6  -14246.1   28492.3     11994 
+
+Random effects:
+
+Conditional model:
+ Groups       Name        Variance Std.Dev.
+ Subplot:Plot (Intercept) 0.24494  0.4949  
+ Plot         (Intercept) 0.03168  0.1780  
+Number of obs: 12000, groups:  Subplot:Plot, 1500; Plot, 30
+
+Dispersion parameter for genpois family (): 0.399 
+
+Conditional model:
+                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)        0.274240   0.036072   7.603 2.90e-14 ***
+Year              -0.020738   0.001988 -10.434  < 2e-16 ***
+scale(fence.dist) -0.161643   0.035318  -4.577 4.72e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+\end{verbatim}
+\end{landscape}
 
 \end{document}
 

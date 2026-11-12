@@ -71,7 +71,13 @@ Modnames <- paste(sub(".*formula =*(.*?) *, .*", "\\1",
                       unlist(lapply(Cand.models, formula))))
 
 # AIC table to 4 digits
-aictab(cand.set = Cand.models, modnames = Modnames, sort = TRUE)
+my.aic <- aictab(cand.set = Cand.models, modnames = Modnames, sort = TRUE) %>%
+  as.data.frame()
+
+my.aic <- my.aic %>% dplyr::select(-ModelLik, -Cum.Wt)
+my.aic[, 3:6] <- round(my.aic[, 3:6],3)
+my.aic
+
 
 # summary
 summary(Cand.models[[5]])
@@ -79,6 +85,8 @@ summary(Cand.models[[5]])
 # check diagnostics
 res <- simulateResiduals(Cand.models[[5]], n = 1000)
 plot(res)
+
+kable(my.aic, "latex")
 
 testDispersion(res)
 testUniformity(res)

@@ -202,7 +202,7 @@ ggplot()+
     guide = guide_legend(
       override.aes = list(size = 5, alpha = 1)
     ))+
-  labs(size = "Approximate ground cover proportion",
+  labs(size = "Approximate proportion of bare ground",
        colour = "Transect type")
 
 

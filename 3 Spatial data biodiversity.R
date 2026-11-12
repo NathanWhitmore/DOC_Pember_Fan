@@ -7,6 +7,7 @@ library(glmmTMB)
 library(spdep)
 library(kableExtra)
 library(AICcmodavg)
+library(DHARMa)
 
 # load data
 convenant <- st_read("Lees_Valley_Convenant_Transects_20191220.gpx")
@@ -243,7 +244,17 @@ Models[[6]] <- glmmTMB(Indigenous ~ Year + scale(river.dist) + (1|Plot/Subplot),
 Models[[7]] <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 Models[[8]] <- glmmTMB(Indigenous ~ scale(river.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
 Models[[9]] <- glmmTMB(Indigenous ~ scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
-Models[[10]] <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[10]] <- glmmTMB(Indigenous ~ as.factor(Year) + scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[11]] <- glmmTMB(Indigenous ~ as.factor(Year) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[12]] <- glmmTMB(Indigenous ~ as.factor(Year) + scale(river.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[13]] <- glmmTMB(Indigenous ~ as.factor(Year) * scale(river.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[14]] <- glmmTMB(Indigenous ~ as.factor(Year) * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[15]] <- glmmTMB(Indigenous ~ Year * scale(river.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+Models[[16]] <- glmmTMB(Indigenous ~ Year * scale(fence.dist) + (1|Plot/Subplot), family = genpois(), data = my.data)
+
+
+
+# summary(Models[[14]])
 
 # create a vector of names to trace back models in set
 Modnames <- paste("mod", 1:length(Models), sep = " ")
@@ -259,27 +270,80 @@ my.aic[, 3:6] <- round(my.aic[, 3:6],3)
 my.aic
 
 # kable
-
 kable(my.aic, "latex")
 
+# Model prediction 
+# manual prediction
+# fence distances 
+summary(Models[[14]])
 
+range(my.data$fence.dist)
+fence.mean <- mean(my.data$fence.dist)
+fence.sd <- sd(my.data$fence.dist)
+fence.dist <- seq(from = 100, to= 1000, by =100)
+
+
+newdata <- expand_grid(Year = 0:7,
+                       fence.dist  = fence.dist)
+newdata$fence.scale <-(newdata$fence.dist-fence.mean)/fence.sd 
+
+# manual calculation in order to avoid random effect complications
+# extract fixed-effect coefficients
+betas <- fixef(Models[[14]])$cond
+
+# extract fixed-effect coefficients
+newdata$beta.intercept <- fixef(Models[[14]])$cond[1]
+newdata$beta.fence <- fixef(Models[[14]])$cond[9]
+
+beta.year <- c(0,fixef(Models[[14]])$cond[2:8])
+newdata$beta.year <- rep(beta.year, each = 10)
+
+beta.interaction <- c(0,fixef(Models[[14]])$cond[10:16])
+newdata$beta.interaction  <- rep(beta.interaction , each = 10)
+
+
+# Convert from log scale to predicted counts
+newdata$fitted <- exp(newdata$beta.intercept + 
+                        newdata$beta.fence * newdata$fence.scale +
+                        newdata$beta.year +
+                        newdata$beta.interaction )
+
+ggplot()+
+  theme_bw() +
+  geom_line(data = newdata, aes(x = Year, y= fitted, colour = as.factor(fence.dist)) )+
+  theme(panel.grid = element_blank())+
+  labs(colour = "Distance from fence line (m)",
+       x = "\nYear",
+       y= "Expected indigenous species richness \n(per subplot)\n")+
+  theme(axis.title = element_text(size = 16)) +
+  theme(axis.text = element_text(size = 14))+
+  scale_y_continuous(breaks = seq(from = 0, to = 2, by = 0.2),
+                     labels = seq(from = 0, to = 2, by = 0.2))
+
+
+ggsave("Pember fan distance from fence.png",  
+       scale = 1.2, width =9, height = 6,
+       bg = "white")
+
+
+
+
+
+# older code used to justify random effects
+# drop below to find model graphics
 # summary
-summary(Models[[7]])
+summary(Models[[14]])
 
 # fitted
-my.data$fitted <- fitted(Models[[7]])
-
-ggplot()+ 
-  geom_violin(data = my.data, aes(y = Indigenous, x = as.factor(round(fitted ))))+
-  geom_abline(intercept = 0, slope = 1, colour = "red", lwd = 2)
+my.data$fitted <- fitted(Models[[11]])
 
 
 # simplified gen vs com
-gen <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = genpois(), data = my.data)
-com <- glmmTMB(Indigenous ~ Year + scale(fence.dist) + (1|Plot), family = compois(), data = my.data)
+gen <- glmmTMB(Indigenous ~ as.factor(Year) + scale(fence.dist) + (1|Plot), family = genpois(), data = my.data)
+com <- glmmTMB(Indigenous ~ as.factor(Year) + scale(fence.dist) + (1|Plot), family = compois(), data = my.data)
 
 # diagnostics
-res <- simulateResiduals(Models[[7]])
+res <- simulateResiduals(Models[[11]])
 plot(res)
 res.gen <- simulateResiduals(gen)
 plot(res.gen)
@@ -362,42 +426,4 @@ ggsave("Pember fan random effect fence spatial.png",
        scale = 1.2, width =9, height = 6,
        bg = "white")
 
-
-# trajectory of 
-
-summary(Models[[7]])
-ranef(Models[[7]])
-
-# fence distances 
-range(my.data$fence.dist)
-fence.mean <- mean(my.data$fence.dist)
-fence.sd <- sd(my.data$fence.dist)
-fence.dist <- seq(from = 100, to= 1000, by =100)
-
-
-newdata <- expand_grid(Year = 0:8,
-                      fence.dist  = fence.dist)
-newdata$fence.scale <-(newdata$fence.dist-fence.mean)/fence.sd 
-
-newdata$fitted <-   exp(0.274240  + (-0.020738 * newdata$Year) +  
-  (-0.161643  * newdata$fence.scale) )
-
-newdata$fence.dist  <- as.factor(newdata$fence.dist )
-
-
-ggplot()+
-  theme_bw() +
-  geom_line(data = newdata, aes(x = Year, y= fitted, colour = fence.dist), lwd =1)+
-  theme(panel.grid = element_blank())+
-  labs(colour = "Distance from fence line (m)",
-       x = "\nYear",
-       y= "Expected indigenous biodiversity \n(per subplot)\n")+
-  theme(axis.title = element_text(size = 16)) +
-  theme(axis.text = element_text(size = 14))
-  
-       
-ggsave("Pember fan distance from fence.png",  
-       scale = 1.2, width =9, height = 6,
-       bg = "white")
-                       
 

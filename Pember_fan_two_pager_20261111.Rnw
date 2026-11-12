@@ -1,0 +1,142 @@
+\documentclass{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{makeidx}
+\usepackage{multicol}
+\usepackage{sectsty}
+\usepackage[colorlinks = true,
+            linkcolor = blue,
+            urlcolor  = blue,
+            citecolor = blue,
+            anchorcolor = green]{hyperref}
+
+\usepackage{rotating}            
+\usepackage{pdflscape}     
+            
+\usepackage{natbib}
+\setcitestyle{aysep={}} 
+\bibliographystyle{apalike}
+
+
+% my ammendments
+\usepackage{xcolor}
+\usepackage{bookman}
+\usepackage{titlesec}
+\usepackage{pdflscape}
+\usepackage[font=small,labelfont=bf]{caption}
+
+\usepackage{sectsty} % sets colour of chapters
+\allsectionsfont{\sffamily \mdseries\color{blue!20!black!30!green}} 
+%\sectionfont{\color{purple}}
+
+\setkeys{Gin}{width=0.9\textwidth}
+
+
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{shaded}}{\end{shaded}}
+
+\newcommand{\mytilde}{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}
+
+
+
+
+\begin{document}
+
+
+
+% title page
+\begin{titlepage}
+\vspace*{\stretch{1.0}}
+
+
+
+\noindent\normalsize\textsf{A report prepared for:} 
+
+\vspace{3mm}
+
+\noindent\normalsize\textsf{\textbf{Department of Conservation}}
+
+\begin{center}
+\vspace{20mm}
+
+{\fontfamily{ppl}\selectfont
+    \textcolor{blue!20!black!30!green}{\Large\Huge{\textsf{\textbf{The Pember Fan: Report Overview}
+}}}}
+
+\vspace{3mm}
+
+
+
+\end{center}
+
+\vspace{80mm}
+
+\begin{flushright}
+\noindent\textbf{\textsf{Nathan Whitmore}}\\
+
+
+
+\noindent \textsf{nathan@reproducible.co.nz}\\
+\noindent \textsf{11 November 2026}
+
+\end{flushright}
+
+\vspace{5mm}
+
+
+\vspace*{\stretch{2.0}}
+
+\end{titlepage}
+
+
+
+
+\begin{shaded}
+
+\section*{Summary of Findings} 
+
+
+
+\begin{itemize}
+  \item A  statistical analysis of vegetation monitoring data on the Pember Fan in Lees Valley (2018--2025) has identified some important changes in the plant communities over the past eight years. 
+  \item The results show that grasses, particularly exotic grasses, are becoming more dominant, while herbaceous plants (forbs), including native species, are declining. At the same time, the amount of bare ground is decreasing, suggesting that vegetation is likely becoming denser. Overall, the findings indicate a gradual reduction in native plant diversity across the fan. These changes suggest that increasing grass cover may be reducing the space available for smaller native plants.
+  \item Of particular concern is the Lees Valley daisy \emph{Brachyscome pinnata}, a nationally endangered plant whose only known natural population occurs on the Pember Fan. Monitoring shows a substantial decline in this species, particularly over the past three years, raising concerns about its possible extinction. There is also some evidence of a decline in the threatened native dryland sow thistle, although this trend is less certain.
+   \item  The report recommends continuing the existing vegetation monitoring programme in its current form, which is providing valuable information about changes across the fan. It found that the trajectories found in the data set align with the observations and assessments of DOC staff.
+  \item  It is the author's assessment that, while an experimental study, involving the regulation of grazing pressure is likely to be impractical, alternative experimental designs are possible, and should be explored. Such experiments could offer guidance on how to manage farming activity for the benefit of biodiversity and threatened native species on the fan.
+\end{itemize}
+
+
+\section*{Key graphs} 
+
+\begin{itemize}
+  \item Decline in biodiversity: \textbf{Figure 2}
+  \item Disappearance of bare ground: \textbf{Figure 5}
+  \item Transition to grasses: \textbf{Figure 7}
+  \item Disappearance of Lees Valley daisy: \textbf{Figure 12}
+
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{shaded}
+
+
+
+\end{document}
+
